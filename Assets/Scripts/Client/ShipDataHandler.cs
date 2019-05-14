@@ -13,10 +13,12 @@ namespace Network
             _game = GetComponent<ClientGameManager>();
         }
 
-        public void SpawnShip(string prefab)
+        public void TestSpawn()
         {
-            RequestSpawn packet = new RequestSpawn(_game.playerId, Prefabs.GetFromString("shuttle"));
-            _client.Send(packet);
+            byte[] config = new byte[6];
+            config[0] = (byte) 1;
+            config[1] = (byte) 1;
+            RequestSpawn packet = new RequestSpawn(_game.playerId, 1, config);
         }
     }
 }

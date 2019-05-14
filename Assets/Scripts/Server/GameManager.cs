@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
         playerShips = new Dictionary<int, GameObject>();
         players = new Dictionary<int, NetPeer>();
         playerNames = new Dictionary<int, string>();
-        server = FindObjectOfType<Server>();
+        server = GetComponent<Server>();
         playerDataHandler = gameObject.AddComponent<PlayerDataHandler>();
         shipDataHandler = gameObject.AddComponent<ShipDataHandler>();
     }

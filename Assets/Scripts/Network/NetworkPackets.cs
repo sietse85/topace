@@ -7,22 +7,30 @@ namespace Network
     {
         private byte headerByte;
         public int playerId;
+        public int vehicleId;
+        public byte[] config;
 
-        public RequestSpawn(int playerId, int vehicleId)
+        public RequestSpawn(int playerId, int vehicleId, byte[] config)
         {
             headerByte = HeaderBytes.RequestSpawn;
             this.playerId = playerId;
+            this.vehicleId = vehicleId;
+            this.config = config;
         }
         
         public void Serialize(NetDataWriter writer)
         {
             writer.Put(headerByte);
             writer.Put(playerId);
+            writer.Put(vehicleId);
+            writer.Put(config);
         }
 
         public void Deserialize(NetDataReader reader)
         {
             playerId = reader.GetInt();
+            vehicleId = reader.GetInt();
+            config = reader.GetRemainingBytes();
         }
     }
 

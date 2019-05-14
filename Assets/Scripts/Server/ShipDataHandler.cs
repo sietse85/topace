@@ -24,7 +24,7 @@ namespace Network
             peer.Send(b, DeliveryMethod.ReliableUnordered);
         }
 
-        public void SpawnShip(int prefabId, int playerId)
+        public void SpawnShip(int vehicleId, int playerId)
         {
                
             

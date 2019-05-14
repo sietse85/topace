@@ -23,7 +23,6 @@ namespace Network
         {
             Debug.Log("Client playerId = " + playerId);
             _game.playerId = playerId;
-            _game.shipDataHandler.SpawnShip("shuttle");
         }
     }
 }
