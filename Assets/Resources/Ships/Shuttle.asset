@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7da50d7ef18644db8f454a24e0d72dba, type: 3}
+  m_Name: Shuttle
+  m_EditorClassIdentifier: 
+  itemId: 1
+  name: Shuttle
+  prefab: {fileID: 1166499526440852239, guid: 902b1982e2f1b604aa52cf0b75b388b6, type: 3}
+  baseHealth: 100
+  baseShield: 50
+  baseArmor: 0
+  rollSpeed: 100
+  yawSpeed: 100
+  pitchSpeed: 100
+  isLandVehicle: 0
+  acceleration: 30
+  maximumSpeed: 50
+  batteryCapacity: 100
+  rechargePerSec: 1
+  shieldRechargePerSec: 2
+  moduleSlots: 2
+  weaponSlots: 2
