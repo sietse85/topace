@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Network;
 using UnityEngine;
 
 public class FoiledWings : MonoBehaviour {
@@ -9,7 +10,11 @@ public class FoiledWings : MonoBehaviour {
     Vector3 v = new Vector3();
     // Start is called before the first frame update
 
-    public void Start () {
+    public void Start ()
+    {
+        if (FindObjectOfType<Server>() != null)
+            this.enabled = false;
+        
         transform.Rotate (0f, 0f, 0f);
     }
 

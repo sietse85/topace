@@ -13,6 +13,9 @@ namespace Network
         private NetDataWriter _writer;
         private NetPeer _server;
 
+        //client will send updates of all owned networktransform each sec
+        public float updateRatePerSecond = 0.033f;
+
         // Start is called before the first frame update
         void Start()
         {

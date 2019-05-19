@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Network
 {
-    public class ClientShipDataHandler : MonoBehaviour
+    public class ClientVehicleDataHandler : MonoBehaviour
     {
         private Client _client;
         private ClientGameManager _game;
@@ -15,10 +15,12 @@ namespace Network
 
         public void TestSpawn()
         {
+            Debug.Log("test spawn");
             byte[] config = new byte[6];
             config[0] = (byte) 1;
             config[1] = (byte) 1;
             RequestSpawn packet = new RequestSpawn(_game.playerId, 1, config);
+            _client.Send(packet);
         }
     }
 }

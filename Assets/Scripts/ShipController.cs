@@ -17,6 +17,7 @@ public class ShipController : MonoBehaviour {
     float accel = 0f;
     private int shipId = 0;
     public bool shipControl = false;
+    private bool shipInitialized = false;
 
     private void Start()
     {
@@ -39,7 +40,17 @@ public class ShipController : MonoBehaviour {
     void Update ()
     {
         if (!shipControl)
+        {
             return;
+        }
+        else
+        {
+            if (!shipInitialized)
+            {
+                InitShip();
+                shipInitialized = true;
+            }
+        }
         
         GetMouseInput();
         GetKeyInput();

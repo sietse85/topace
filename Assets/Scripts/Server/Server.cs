@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using LiteNetLib;
@@ -15,6 +16,9 @@ namespace Network
         
         public int port = 5000;
         public string ip = "127.0.0.1";
+        
+        //send the networktransfrom  updates to client each ... seconds
+        public float updateRatePerSecond = 0.033f;
         
         private void Start()
         {
@@ -48,10 +52,11 @@ namespace Network
             peer.Send(_writer, DeliveryMethod.ReliableSequenced);
         }
         
-        public void SendToAll<T>(T packet, NetPeer peer) where T : struct, INetSerializable
+        public void SendToAll<T>(T packet) where T : struct, INetSerializable
         {
             _writer.Reset();
             packet.Serialize(_writer);
+            Debug.Log(_writer.Data[0]);
             foreach (KeyValuePair<int, NetPeer> p in _game.players)
                 _game.players[p.Key].Send(_writer, DeliveryMethod.ReliableSequenced);
         }

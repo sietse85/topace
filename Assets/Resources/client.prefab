@@ -1,0 +1,132 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &405327462808472502
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 405327462808472504}
+  - component: {fileID: 405327462808472505}
+  - component: {fileID: 405327462808472507}
+  - component: {fileID: 405327462808472506}
+  - component: {fileID: 405327462808472509}
+  - component: {fileID: 405327462808472511}
+  - component: {fileID: 405327462808472508}
+  - component: {fileID: 405327462808472510}
+  m_Layer: 0
+  m_Name: client
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &405327462808472504
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405327462808472502}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 528, y: 5.6087594, z: 450.67032}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &405327462808472505
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405327462808472502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 47b2ad188a9f44645ac58e4e48a73910, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  updateRatePerSecond: 0
+--- !u!114 &405327462808472507
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405327462808472502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6abbde81a3f395948960b7671a9af75b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  multiplayerMenu: {fileID: 0}
+  spawnMenu: {fileID: 0}
+  mainMenu: {fileID: 0}
+  vc: {fileID: 0}
+  playerId: 0
+  playerDataHandler: {fileID: 0}
+  vehicleDataHandler: {fileID: 0}
+  networkTransformHandler: {fileID: 0}
+--- !u!114 &405327462808472506
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405327462808472502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e550c854bcaea247b5da0bf3f9a23aa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &405327462808472509
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405327462808472502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5973218e9cba7aa4cb451cf06e30edba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &405327462808472511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405327462808472502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 225924d36d544b10a8500270f78e34fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &405327462808472508
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405327462808472502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bce1903d6ef4467d8b49c55f458771fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &405327462808472510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 405327462808472502}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95bc0d669726b0f48ba760bd8129cd62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
