@@ -1,15 +1,16 @@
+using Network;
 using UnityEngine;
 
-namespace Network
+namespace Client
 {
     public class ClientVehicleDataHandler : MonoBehaviour
     {
-        private Client _client;
+        private GameClient _gameClient;
         private ClientGameManager _game;
 
         private void Start()
         {
-            _client = GetComponent<Client>();
+            _gameClient = GetComponent<GameClient>();
             _game = GetComponent<ClientGameManager>();
         }
 
@@ -20,7 +21,7 @@ namespace Network
             config[0] = (byte) 1;
             config[1] = (byte) 1;
             RequestSpawn packet = new RequestSpawn(_game.playerId, 1, config);
-            _client.Send(packet);
+            _gameClient.Send(packet);
         }
     }
 }

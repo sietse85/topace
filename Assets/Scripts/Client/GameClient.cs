@@ -4,17 +4,15 @@ using LiteNetLib;
 using LiteNetLib.Utils;
 using UnityEngine;
 
-namespace Network
+namespace Client
 {
-    public class Client : MonoBehaviour, INetEventListener
+    public class GameClient : MonoBehaviour, INetEventListener
     {
         private NetManager _client;
         private ClientGameManager _game;
         private NetDataWriter _writer;
         private NetPeer _server;
-
-        //client will send updates of all owned networktransform each sec
-        public float updateRatePerSecond = 0.033f;
+        public float updateSpeedNetworktransforms = 0.1f;
 
         // Start is called before the first frame update
         void Start()
@@ -70,12 +68,10 @@ namespace Network
 
         public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
-
         }
 
         public void OnConnectionRequest(ConnectionRequest request)
         {
-
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
@@ -87,7 +83,7 @@ namespace Network
         {
             _writer.Reset();
             packet.Serialize(_writer);
-            _server.Send(_writer, DeliveryMethod.ReliableSequenced);
+            _server.Send(_writer, DeliveryMethod.Unreliable);
         }
     }
 }

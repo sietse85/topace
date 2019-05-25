@@ -1,77 +1,82 @@
 ﻿using System.Collections.Generic;
 using LiteNetLib;
+using Menu;
 using UnityEngine;
 using Network;
+using VehicleFunctions;
 
-public class ClientGameManager : MonoBehaviour
+namespace Client
 {
-    private Client _client;
-    
-    public Dictionary<int, GameObject> _vehicles;
-    private Dictionary<int, string> _playerNames;
-    public Transform multiplayerMenu;
-    public Transform spawnMenu;
-    public Transform mainMenu;
-    public Dictionary<int, Transform> networkTransforms;
-
-    public VehicleConstructor vc;
-
-    public int playerId;
-
-    public ClientPlayerDataHandler playerDataHandler;
-    public ClientVehicleDataHandler vehicleDataHandler;
-    public NetworkTransformHandler networkTransformHandler;
-    
-    private void Start()
+    public class ClientGameManager : MonoBehaviour
     {
-        _client = GetComponent<Client>();
-        playerDataHandler = gameObject.GetComponent<ClientPlayerDataHandler>();
-        vehicleDataHandler = gameObject.GetComponent<ClientVehicleDataHandler>();
-        networkTransformHandler = gameObject.GetComponent<NetworkTransformHandler>();
-        _vehicles = new Dictionary<int, GameObject>();
-        
-        networkTransforms = new Dictionary<int, Transform>();
-        vc = gameObject.GetComponent<VehicleConstructor>();
-    }
+        private GameClient _gameClient;
+        public Dictionary<int, GameObject> _vehicles;
+        private Dictionary<int, string> _playerNames;
+        public Transform multiplayerMenu;
+        public Transform spawnMenu;
+        public Transform mainMenu;
+        public Dictionary<int, Transform> networkTransforms;
+        public VehicleConstructor vc;
+        public int playerId;
+        public ClientPlayerDataHandler playerDataHandler;
+        public ClientVehicleDataHandler vehicleDataHandler;
+        public NetworkTransformHandler networkTransformHandler;
+        public VehicleController vehicleController;
 
-    public void HandleReceived(NetPacketReader r)
-    {
-        byte header = r.GetByte();
-
-        switch (header)
+        private void Start()
         {
-            case HeaderBytes.AskForUserName:
-                playerDataHandler.SendPlayerName();
-                break;
-            case HeaderBytes.SendPlayerId:
-                Debug.Log("player id packet recevied");
-                playerDataHandler.SetPlayerId(r.GetInt());
-                vehicleDataHandler.TestSpawn();
-                break;
-            case HeaderBytes.OpenSpawnMenuOnClient:
-                OpenSpawnMenu();
-                break;
-            case HeaderBytes.SpawnShipOnClient:
-                vc.ConstructVehicleFromPacket(r);
-                break;
-            case HeaderBytes.NetworkTransFormId:
-                networkTransformHandler.UpdateNetworkTransform(r);
-                break;
-            case HeaderBytes.NetworkTransFormsForVehicle:
-                Debug.Log("transforms received");
-                networkTransformHandler.SetTransformIds(r);
-                break;
-            default:
-                break;
-        } 
-    }
+            _gameClient = GetComponent<GameClient>();
+            playerDataHandler = gameObject.GetComponent<ClientPlayerDataHandler>();
+            vehicleDataHandler = gameObject.GetComponent<ClientVehicleDataHandler>();
+            networkTransformHandler = gameObject.GetComponent<NetworkTransformHandler>();
+            vehicleController = gameObject.GetComponent<VehicleController>();
+            _vehicles = new Dictionary<int, GameObject>();
+            networkTransforms = new Dictionary<int, Transform>();
+            vc = gameObject.GetComponent<VehicleConstructor>();
+        }
 
-    public void OpenSpawnMenu()
-    {
-        Debug.Log("open spawn menu");
-        multiplayerMenu.GetComponentInChildren<Canvas>().enabled = false;
-        mainMenu.GetComponentInChildren<Canvas>().enabled = false;
-        spawnMenu.GetComponentInChildren<Canvas>().enabled = true;
-        spawnMenu.GetComponentInChildren<ShipSelector>().LoadShipList();
+        public void HandleReceived(NetPacketReader r)
+        {
+            byte header = r.GetByte();
+
+            switch (header)
+            {
+                case HeaderBytes.AskClientForUsername:
+                    playerDataHandler.SendPlayerName();
+                    break;
+                case HeaderBytes.SendPlayerId:
+                    playerDataHandler.SetPlayerId(r.GetInt());
+                    vehicleDataHandler.TestSpawn();
+                    break;
+                case HeaderBytes.OpenSpawnMenuOnClient:
+                    OpenSpawnMenu();
+                    break;
+                case HeaderBytes.SpawnVehicle:
+                    vc.ConstructVehicleFromPacket(r);
+                    break;
+                case HeaderBytes.NetworkTransFormId:
+                    networkTransformHandler.UpdateNetworkTransform(r);
+                    break;
+                case HeaderBytes.NetworkTransFormsForVehicle:
+                    networkTransformHandler.SetTransformIds(r);
+                    break;
+            }
+        }
+
+        public void OpenSpawnMenu()
+        {
+            Debug.Log("open spawn menu");
+            multiplayerMenu.GetComponentInChildren<Canvas>().enabled = false;
+            mainMenu.GetComponentInChildren<Canvas>().enabled = false;
+            spawnMenu.GetComponentInChildren<Canvas>().enabled = true;
+            spawnMenu.GetComponentInChildren<ShipSelector>().LoadShipList();
+        }
+
+        public void ShowVehicleUI()
+        {
+            multiplayerMenu.GetComponentInChildren<Canvas>().enabled = false;
+            mainMenu.GetComponentInChildren<Canvas>().enabled = false;
+            spawnMenu.GetComponentInChildren<Canvas>().enabled = false;
+        }
     }
 }

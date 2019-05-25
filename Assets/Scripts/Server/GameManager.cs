@@ -1,81 +1,84 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using LiteNetLib;
 using UnityEngine;
 using Network;
-using UnityEngine.Networking.Types;
 
-public class GameManager : MonoBehaviour
+namespace Server
 {
-//    public Dictionary<int, GameObject> playerShips;
-    public Dictionary<int, NetworkTransform> networkTransforms;
-    public Dictionary<int, GameObject> vehicles;
-    public Dictionary<int, NetPeer> players;
-    public Dictionary<int, string> playerNames;
-    private Terrain map;
-    public Server server;
-    public PlayerDataHandler playerDataHandler;
-    public VehicleDataHandler shipDataHandler;
-    public VehicleConstructor vc;
-
-    public GameObject playerShip;
-
-    public int shipId = 0;
-    public int playerId = 0;
-    public int networkTransformId = 0;
-    
-    // Start is called before the first frame update
-    void Start()
+    public class GameManager : MonoBehaviour
     {
-        map = Instantiate(Resources.Load("maps/terrain"), Vector3.zero, Quaternion.identity) as Terrain;
-        Debug.Log("Default Map Instantiated");
-        networkTransforms = new Dictionary<int, NetworkTransform>();
-        vehicles = new Dictionary<int, GameObject>();
-        players = new Dictionary<int, NetPeer>();
-        playerNames = new Dictionary<int, string>();
-        server = GetComponent<Server>();
-        playerDataHandler = gameObject.GetComponent<PlayerDataHandler>();
-        shipDataHandler = gameObject.GetComponent<VehicleDataHandler>();
-        vc = gameObject.AddComponent<VehicleConstructor>();
-    }
+        public Dictionary<int, NetworkTransform> networkTransforms;
+        public Dictionary<int, NetPeer> players;
+        public Dictionary<int, string> playerNames;
+        public Dictionary<int, GameObject> vehicles;
+        public Server server;
+        public PlayerDataHandler playerDataHandler;
+        public VehicleDataHandler vehicleDataHandler;
+        public VehicleConstructor vc;
+        public int vehicleId;
+        public int playerId;
+        public int networkTransformId;
+        public float updateSpeedNetworktransforms = 0.2f;
+        private NetworkTransformUpdate u;
 
-    // Update is called once per frame
-    public void HandleReceived(NetPeer peer, NetPacketReader r)
-    {
-        byte header = r.GetByte();
-
-        switch (header)
+        // Start is called before the first frame update
+        void Start()
         {
-            case HeaderBytes.SendUserName:
-                playerDataHandler.ReceivePlayerName(peer, r);
-                break;
-            case HeaderBytes.RequestSpawn:
-                shipDataHandler.PlayerRequestedShipSpawn(peer, r);
-                break;
-            case HeaderBytes.NetworkTransFormId:
-                shipDataHandler.UpdateVehicleTransform(r);
-                break;
-            default:
-                break;
-        } 
-    }
+            networkTransforms = new Dictionary<int, NetworkTransform>();
+            vehicles = new Dictionary<int, GameObject>();
+            players = new Dictionary<int, NetPeer>();
+            playerNames = new Dictionary<int, string>();
+            server = GetComponent<Server>();
+            playerDataHandler = gameObject.GetComponent<PlayerDataHandler>();
+            vehicleDataHandler = gameObject.GetComponent<VehicleDataHandler>();
+            vc = gameObject.AddComponent<VehicleConstructor>();
+            u = new NetworkTransformUpdate();
+            StartCoroutine(SendActualNetworkTransformPositionsToClients());
+        }
 
-    public void DebugVehicles()
-    {
-        Debug.Log(vehicles.Count);
-
-        foreach (KeyValuePair<int, GameObject> obj in vehicles)
+        // Update is called once per frame
+        public void HandleReceived(NetPeer peer, NetPacketReader r)
         {
+            byte header = r.GetByte();
 
-            NetworkTransform[] t = obj.Value.GetComponentsInChildren<NetworkTransform>();
-
-            foreach (NetworkTransform nt in t)
+            switch (header)
             {
-                Debug.Log(nt.GetPlayerId());
-                Debug.Log(nt.GetTransformId());
+                case HeaderBytes.SendUserNameToServer:
+                    playerDataHandler.ReceivePlayerName(peer, r);
+                    break;
+                case HeaderBytes.RequestSpawn:
+                    vehicleDataHandler.PlayerRequestedShipSpawn(peer, r);
+                    break;
+                case HeaderBytes.NetworkTransFormId:
+                    vehicleDataHandler.UpdateVehicleTransform(r);
+                    break;
+            }
+        }
+
+        public IEnumerator SendActualNetworkTransformPositionsToClients()
+        {
+            while (true)
+            {
+                foreach (KeyValuePair<int, NetworkTransform> t in networkTransforms)
+                {
+                    if (t.Value.networkTransform == null)
+                        continue;
+
+                    u.LocX = t.Value.networkTransform.position.x;
+                    u.LocY = t.Value.networkTransform.position.y;
+                    u.LocZ = t.Value.networkTransform.position.z;
+                    u.RotX = t.Value.networkTransform.rotation.x;
+                    u.RotY = t.Value.networkTransform.rotation.y;
+                    u.RotZ = t.Value.networkTransform.rotation.z;
+                    u.NetworkTransformId = t.Value.networkTransformId;
+                    u.PlayerId = t.Value.GetPlayerId();
+
+                    server.SendToAll(u);
+                }
+
+                yield return new WaitForSeconds(updateSpeedNetworktransforms);
             }
         }
     }
 }
-
-
-

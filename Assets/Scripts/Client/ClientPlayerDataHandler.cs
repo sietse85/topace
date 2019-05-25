@@ -1,22 +1,23 @@
+using Network;
 using UnityEngine;
 
-namespace Network
+namespace Client
 {
     public class ClientPlayerDataHandler : MonoBehaviour
     {
-        private Client _client;
+        private GameClient _gameClient;
         private ClientGameManager _game;
 
         private void Start()
         {
-            _client = GetComponent<Client>();
+            _gameClient = GetComponent<GameClient>();
             _game = GetComponent<ClientGameManager>();
         }
          
         public void SendPlayerName()
         {
-            SendUserName packet = new SendUserName("Sietse");
-            _client.Send(packet); 
+            SendUserNameToServer packet = new SendUserNameToServer("Sietse");
+            _gameClient.Send(packet); 
         }
 
         public void SetPlayerId(int playerId)

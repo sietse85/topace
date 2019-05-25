@@ -1,114 +1,116 @@
-using System.Numerics;
 using LiteNetLib.Utils;
-using UnityEngine;
 
 namespace Network
 {
     
     public struct RequestSpawn : INetSerializable
     {
-        private byte headerByte;
-        public int playerId;
-        public int vehicleId;
-        public byte[] config;
+        public byte HeaderByte;
+        public int PlayerId;
+        public int VehicleId;
+        public byte[] Config;
 
         public RequestSpawn(int playerId, int vehicleId, byte[] config)
         {
-            headerByte = HeaderBytes.RequestSpawn;
-            this.playerId = playerId;
-            this.vehicleId = vehicleId;
-            this.config = config;
+            HeaderByte = HeaderBytes.RequestSpawn;
+            this.PlayerId = playerId;
+            this.VehicleId = vehicleId;
+            this.Config = config;
         }
         
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(headerByte);
-            writer.Put(playerId);
-            writer.Put(vehicleId);
-            writer.Put(config);
+            writer.Put(HeaderByte);
+            writer.Put(PlayerId);
+            writer.Put(VehicleId);
+            writer.Put(Config);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            playerId = reader.GetInt();
-            vehicleId = reader.GetInt();
-            config = reader.GetRemainingBytes();
+            PlayerId = reader.GetInt();
+            VehicleId = reader.GetInt();
+            Config = reader.GetRemainingBytes();
         }
     }
 
-    public struct SpawnShip : INetSerializable
+    public struct SpawnVehicle : INetSerializable
     {
-        public byte headerByte;
-        public int playerId;
-        public int vehicleId;
-        public float posx;
-        public float posy;
-        public float posz;
-        public float rotx;
-        public float roty;
-        public float rotz;
-        public float rotw;
-        public byte[] config;
+        public byte HeaderByte;
+        public int PlayerId;
+        public int VehicleDatabaseId;
+        public int VehicleId;
+        public float PosX;
+        public float PosY;
+        public float PosZ;
+        public float RotX;
+        public float RotY;
+        public float RotZ;
+        public float RotW;
+        public byte[] Config;
         
 
-        public SpawnShip(int playerId, int vehicleId, float posx, float posy, float posz, float rotx,
-            float roty, float rotz, float rotw, byte[] config)
+        public SpawnVehicle(int playerId, int vehicleDatabaseId, int vehicleId, float posX, float posY, float posZ, float rotX,
+            float rotY, float rotZ, float rotW, byte[] config)
         {
-            headerByte = 0x05;
-            this.playerId = playerId;
-            this.vehicleId = vehicleId;
-            this.posx = posx;
-            this.posy = posy;
-            this.posz = posz;
-            this.rotx = rotx;
-            this.roty = roty;
-            this.rotz = rotz;
-            this.rotw = rotw;
-            this.config = config;
+            HeaderByte = HeaderBytes.SpawnVehicle;
+            this.PlayerId = playerId;
+            this.VehicleDatabaseId = vehicleDatabaseId;
+            this.VehicleId = vehicleId; 
+            this.PosX = posX;
+            this.PosY = posY;
+            this.PosZ = posZ;
+            this.RotX = rotX;
+            this.RotY = rotY;
+            this.RotZ = rotZ;
+            this.RotW = rotW;
+            this.Config = config;
         }
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(headerByte);
-            writer.Put(playerId);
-            writer.Put(vehicleId);
-            writer.Put(posx);
-            writer.Put(posy);
-            writer.Put(posz);
-            writer.Put(rotx);
-            writer.Put(roty);
-            writer.Put(rotz);
-            writer.Put(rotw);
-            writer.Put(config);
+            writer.Put(HeaderByte);
+            writer.Put(PlayerId);
+            writer.Put(VehicleDatabaseId);
+            writer.Put(VehicleId);
+            writer.Put(PosX);
+            writer.Put(PosY);
+            writer.Put(PosZ);
+            writer.Put(RotX);
+            writer.Put(RotY);
+            writer.Put(RotZ);
+            writer.Put(RotW);
+            writer.Put(Config);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            playerId = reader.GetInt();
-            vehicleId = reader.GetInt();
-            posx = reader.GetFloat();
-            posy = reader.GetFloat();
-            posz = reader.GetFloat();
-            rotx = reader.GetFloat();
-            roty = reader.GetFloat();
-            rotz = reader.GetFloat();
-            rotw = reader.GetFloat();
-            config = reader.GetRemainingBytes();
+            PlayerId = reader.GetInt();
+            VehicleDatabaseId = reader.GetInt();
+            VehicleId = reader.GetInt();
+            PosX = reader.GetFloat();
+            PosY = reader.GetFloat();
+            PosZ = reader.GetFloat();
+            RotX = reader.GetFloat();
+            RotY = reader.GetFloat();
+            RotZ = reader.GetFloat();
+            RotW = reader.GetFloat();
+            Config = reader.GetRemainingBytes();
         }
     }
     
-    public struct AskForUserName : INetSerializable
+    public struct AskClientForUsername : INetSerializable
     {
-        public byte headerByte;
+        public byte HeaderByte;
 
-        public AskForUserName(byte header)
+        public AskClientForUsername(byte header)
         {
-            headerByte = header;
+            HeaderByte = header;
         }
 
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(headerByte);
+            writer.Put(HeaderByte);
         }
 
         public void Deserialize(NetDataReader reader)
@@ -117,111 +119,141 @@ namespace Network
         }
     }
     
-    public struct SendUserName : INetSerializable
+    public struct SendUserNameToServer : INetSerializable
     {
-        private byte headerByte;
-        public string playerName;
+        public byte HeaderByte;
+        public string PlayerName;
 
-        public SendUserName(string name)
+        public SendUserNameToServer(string name)
         {
-            headerByte = 0x02;
-            playerName = name;
+            HeaderByte = 0x02;
+            PlayerName = name;
         }
         
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(headerByte);
-            writer.Put(playerName);
+            writer.Put(HeaderByte);
+            writer.Put(PlayerName);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            playerName = reader.GetString();
+            PlayerName = reader.GetString();
         }
     }
     
     public struct SendPlayerId : INetSerializable
     {
-        private byte headerByte;
-        private int playerId;
+        public byte HeaderByte;
+        public int PlayerId;
 
         public SendPlayerId(int playerId)
         {
-            headerByte = 0x04;
-            this.playerId = playerId;
+            HeaderByte = 0x04;
+            this.PlayerId = playerId;
         }
         
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(headerByte);
-            writer.Put(playerId);
+            writer.Put(HeaderByte);
+            writer.Put(PlayerId);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            headerByte = reader.GetByte();
-            playerId = reader.GetInt();
+            HeaderByte = reader.GetByte();
+            PlayerId = reader.GetInt();
         }
     }
     
     public struct NetworkTransformUpdate : INetSerializable
     {
-        public byte headerByte;
-        public float locX;
-        public float locY;
-        public float locZ;
-        public float rotX;
-        public float rotY;
-        public float rotZ;
-        public float rotW;
-        public int networkTransformId;
+        public byte HeaderByte;
+        public float LocX;
+        public float LocY;
+        public float LocZ;
+        public float RotX;
+        public float RotY;
+        public float RotZ;
+        public float RotW;
+        public int NetworkTransformId;
+        public int PlayerId;
         
         public void Serialize(NetDataWriter writer)
         {
             writer.Put(HeaderBytes.NetworkTransFormId);
-            writer.Put(locX);
-            writer.Put(locY);
-            writer.Put(locZ);
-            writer.Put(rotX);
-            writer.Put(rotY);
-            writer.Put(rotZ);
-            writer.Put(rotW);
-            writer.Put(networkTransformId);
+            writer.Put(LocX);
+            writer.Put(LocY);
+            writer.Put(LocZ);
+            writer.Put(RotX);
+            writer.Put(RotY);
+            writer.Put(RotZ);
+            writer.Put(RotW);
+            writer.Put(NetworkTransformId);
+            writer.Put(PlayerId);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            locX = reader.GetFloat();
-            locY = reader.GetFloat();
-            locZ = reader.GetFloat();
-            rotX = reader.GetFloat();
-            rotY = reader.GetFloat();
-            rotZ = reader.GetFloat();
-            rotW = reader.GetFloat();
-            networkTransformId = reader.GetInt();
+            LocX = reader.GetFloat();
+            LocY = reader.GetFloat();
+            LocZ = reader.GetFloat();
+            RotX = reader.GetFloat();
+            RotY = reader.GetFloat();
+            RotZ = reader.GetFloat();
+            RotW = reader.GetFloat();
+            NetworkTransformId = reader.GetInt();
+            PlayerId = reader.GetInt();
         }
     }
     
     public struct NetworkTransformsForVehicle : INetSerializable
     {
-        public byte headerByte;
-        public int vehicleId;
-        public int playerId;
-        public int[] networkTransformIds;
+        public byte HeaderByte;
+        public int VehicleId;
+        public int PlayerId;
+        public int[] NetworkTransformIds;
         
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(headerByte);
-            writer.Put(vehicleId);
-            writer.Put(playerId);
-            writer.PutArray(networkTransformIds);
+            writer.Put(HeaderByte);
+            writer.Put(VehicleId);
+            writer.Put(PlayerId);
+            writer.PutArray(NetworkTransformIds);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            vehicleId = reader.GetInt();
-            playerId = reader.GetInt();
-            networkTransformIds = reader.GetIntArray();
+            VehicleId = reader.GetInt();
+            PlayerId = reader.GetInt();
+            NetworkTransformIds = reader.GetIntArray();
+        }
+    }
+    
+    public struct GiveControlOfVehicleToClient : INetSerializable
+    {
+        public byte HeaderByte;
+        public int PlayerId;
+        public int VehicleId;
+
+        public GiveControlOfVehicleToClient(int playerId, int vehicleId)
+        {
+            HeaderByte = HeaderBytes.GiveControlOfVehicleToClient;
+            PlayerId = playerId;
+            VehicleId = vehicleId;
+        }
+        
+        public void Serialize(NetDataWriter writer)
+        {
+            writer.Put(HeaderByte);
+            writer.Put(PlayerId);
+            writer.Put(VehicleId);
+        }
+
+        public void Deserialize(NetDataReader reader)
+        {
+            PlayerId = reader.GetInt();
+            VehicleId = reader.GetInt();
         }
     }
 }

@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7559356618082073082}
-  - component: {fileID: 969731417142602287}
   - component: {fileID: 6665822622920068433}
   - component: {fileID: 7843499118084272883}
   m_Layer: 0
@@ -38,23 +37,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &969731417142602287
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1166499526440852239}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b62e97d98d30b6b44b739e87891de865, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speedYaw: 100
-  speedPitch: 100
-  speedRoll: 100
-  maxSpeed: 50
-  accel: 10
 --- !u!54 &6665822622920068433
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -83,7 +65,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 627a249478e645a44ac1778bff012916, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isLocalTransform: 0
+  t: {fileID: 0}
+  ownedByPlayerId: 0
+  networkTransformId: 0
+  local: 0
 --- !u!114 &6226599884245719246
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -96,7 +81,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 627a249478e645a44ac1778bff012916, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isLocalTransform: 1
+  t: {fileID: 0}
+  ownedByPlayerId: 0
+  networkTransformId: 0
+  local: 1
 --- !u!114 &272167240202810619
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,7 +97,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 627a249478e645a44ac1778bff012916, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isLocalTransform: 1
+  t: {fileID: 0}
+  ownedByPlayerId: 0
+  networkTransformId: 0
+  local: 1
 --- !u!1001 &376128927385187783
 PrefabInstance:
   m_ObjectHideFlags: 0

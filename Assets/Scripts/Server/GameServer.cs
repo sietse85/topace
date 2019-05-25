@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using LiteNetLib;
 using LiteNetLib.Utils;
 using UnityEngine;
 
-namespace Network
+namespace Server
 {
     public class Server : MonoBehaviour, INetEventListener, INetLogger
     {
@@ -49,21 +48,20 @@ namespace Network
         {
             _writer.Reset();
             packet.Serialize(_writer);
-            peer.Send(_writer, DeliveryMethod.ReliableSequenced);
+            peer.Send(_writer, DeliveryMethod.ReliableUnordered);
         }
         
         public void SendToAll<T>(T packet) where T : struct, INetSerializable
         {
             _writer.Reset();
             packet.Serialize(_writer);
-            Debug.Log(_writer.Data[0]);
             foreach (KeyValuePair<int, NetPeer> p in _game.players)
-                _game.players[p.Key].Send(_writer, DeliveryMethod.ReliableSequenced);
+                _game.players[p.Key].Send(_writer, DeliveryMethod.ReliableUnordered);
         }
 
         public void OnPeerConnected(NetPeer peer)
         {
-            _game.playerDataHandler.AskForUserName(peer);
+            _game.playerDataHandler.HandleNewConnection(peer);
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)

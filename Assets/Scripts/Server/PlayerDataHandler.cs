@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using LiteNetLib;
 using UnityEngine;
+using Network;
 
-namespace Network
+namespace Server
 {
     public class PlayerDataHandler : MonoBehaviour
     {
@@ -19,10 +20,10 @@ namespace Network
         public void ReceivePlayerName(NetPeer peer, NetPacketReader r)
         {
             game.playerId++;
-            SendUserName n = new SendUserName();
+            SendUserNameToServer n = new SendUserNameToServer();
             n.Deserialize(r);
             game.players.Add(game.playerId, peer);
-            game.playerNames.Add(game.playerId, n.playerName);
+            game.playerNames.Add(game.playerId, n.PlayerName);
             SendPlayerId(peer, game.playerId);
         }
 
@@ -44,9 +45,9 @@ namespace Network
             }
         }
 
-        public void AskForUserName(NetPeer peer)
+        public void HandleNewConnection(NetPeer peer)
         {
-            AskForUserName askname = new AskForUserName(0x01);
+            AskClientForUsername askname = new AskClientForUsername(0x01);
             server.Send(askname, peer);
         }
     }
