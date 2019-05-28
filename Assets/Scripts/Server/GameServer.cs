@@ -1,26 +1,29 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using LiteNetLib;
 using LiteNetLib.Utils;
+using Network;
 using UnityEngine;
 
 namespace Server
 {
-    public class Server : MonoBehaviour, INetEventListener, INetLogger
+    public class GameServer : MonoBehaviour, INetEventListener, INetLogger
     {
         private NetDataWriter _writer;
         private NetManager _server;
         private GameManager _game;
-        
+        public int maxPlayers = 64;
         public int port = 5000;
         public string ip = "127.0.0.1";
         
         //send the networktransfrom  updates to client each ... seconds
-        public float updateRatePerSecond = 0.033f;
-        
-        private void Start()
+        public float updateSpeed = 0.1f;
+
+        private void Awake()
         {
+            maxPlayers = 64;
             _game = GetComponent<GameManager>();
             NetDebug.Logger = this;
             _writer = new NetDataWriter();
@@ -35,7 +38,7 @@ namespace Server
             {
                 Debug.Log("Server Started");
                 _server.BroadcastReceiveEnabled = true;
-                _server.UpdateTime = 25;
+                _server.UpdateTime = 50;
             }
         }
 
@@ -55,8 +58,33 @@ namespace Server
         {
             _writer.Reset();
             packet.Serialize(_writer);
-            foreach (KeyValuePair<int, NetPeer> p in _game.players)
-                _game.players[p.Key].Send(_writer, DeliveryMethod.ReliableUnordered);
+            for (int i = 0; i < _game.players.Length; i++) {
+                if (_game.players[i].slotOccupied)
+                {
+                    _game.players[i].peer.Send(_writer, DeliveryMethod.ReliableUnordered);
+                }
+            }
+        }
+        
+        public void SendBytesToAll(byte[] buf)
+        {
+            if (_game == null)
+            {
+                Debug.Log("Gamemanager null in Gameserver 72");
+                return;
+            }
+
+            if (buf[0] == HeaderBytes.SendPlayerData)
+            {
+                Debug.Log("Sending player data to clients");
+            }
+
+            for (int i = 0; i < _game.players.Length; i++) {
+                if (_game.players[i].slotOccupied)
+                {
+                    _game.players[i].peer.Send(buf, DeliveryMethod.ReliableUnordered);
+                }
+            }
         }
 
         public void OnPeerConnected(NetPeer peer)
@@ -86,6 +114,7 @@ namespace Server
 
         public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
+            _game.playerDataHandler.UpdateLatencyOfPlayer(peer, latency);
             
         }
 

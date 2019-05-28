@@ -12,5 +12,7 @@ namespace Network
         public const byte GiveControlOfVehicleToClient = 0x08;
         public const byte NetworkTransFormId = 0x09;
         public const byte NetworkTransFormsForVehicle = 0x0A;
+        public const byte RemoveVehicle = 0x0B;
+        public const byte SendPlayerData = 0x0C;
     }
 }

@@ -14,6 +14,8 @@ GameObject:
   - component: {fileID: 1654266435180033190}
   - component: {fileID: 2955771750669075373}
   - component: {fileID: 3812845917922361428}
+  - component: {fileID: 7955244193245491964}
+  - component: {fileID: 3010945495450335913}
   m_Layer: 0
   m_Name: server
   m_TagString: Untagged
@@ -49,7 +51,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   port: 5000
   ip: 127.0.0.1
-  updateRatePerSecond: 0.033
+  updateSpeed: 0.033
 --- !u!114 &8878379812358019258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62,14 +64,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cea6ff20c66fc874488168962b073cc6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  server: {fileID: 0}
+  gameServer: {fileID: 0}
   playerDataHandler: {fileID: 0}
-  shipDataHandler: {fileID: 0}
+  vehicleDataHandler: {fileID: 0}
   vc: {fileID: 0}
-  playerShip: {fileID: 0}
-  shipId: 0
+  networkTransformHandler: {fileID: 0}
+  vehicleId: 0
   playerId: 0
   networkTransformId: 0
+  updateSpeedNetworktransforms: 0.2
 --- !u!114 &1654266435180033190
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -106,3 +109,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e550c854bcaea247b5da0bf3f9a23aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7955244193245491964
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8115453019412995270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5973218e9cba7aa4cb451cf06e30edba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3010945495450335913
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8115453019412995270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b9ce37bd153451fb6a946514b00114a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gameServer: {fileID: 0}
+  game: {fileID: 0}

@@ -3,6 +3,7 @@ using LiteNetLib;
 using Menu;
 using UnityEngine;
 using Network;
+using Server;
 using VehicleFunctions;
 
 namespace Client
@@ -22,6 +23,7 @@ namespace Client
         public ClientVehicleDataHandler vehicleDataHandler;
         public NetworkTransformHandler networkTransformHandler;
         public VehicleController vehicleController;
+        public Player[] players;
 
         private void Start()
         {
@@ -33,6 +35,7 @@ namespace Client
             _vehicles = new Dictionary<int, GameObject>();
             networkTransforms = new Dictionary<int, Transform>();
             vc = gameObject.GetComponent<VehicleConstructor>();
+            players = new Player[64];
         }
 
         public void HandleReceived(NetPacketReader r)
@@ -60,6 +63,12 @@ namespace Client
                 case HeaderBytes.NetworkTransFormsForVehicle:
                     networkTransformHandler.SetTransformIds(r);
                     break;
+                case HeaderBytes.RemoveVehicle:
+                    vehicleDataHandler.RemoveVehicle(r);
+                    break;
+                case HeaderBytes.SendPlayerData:
+                    playerDataHandler.UpdatePlayerData(r);
+                    break;
             }
         }
 
@@ -69,7 +78,7 @@ namespace Client
             multiplayerMenu.GetComponentInChildren<Canvas>().enabled = false;
             mainMenu.GetComponentInChildren<Canvas>().enabled = false;
             spawnMenu.GetComponentInChildren<Canvas>().enabled = true;
-            spawnMenu.GetComponentInChildren<ShipSelector>().LoadShipList();
+            spawnMenu.GetComponentInChildren<VehicleSelector>().LoadShipList();
         }
 
         public void ShowVehicleUI()

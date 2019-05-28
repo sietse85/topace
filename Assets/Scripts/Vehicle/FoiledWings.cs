@@ -16,7 +16,7 @@ namespace VehicleFunctions
         {
             _client = FindObjectOfType<ClientGameManager>();
 
-            if (FindObjectOfType<Server.Server>() != null)
+            if (FindObjectOfType<Server.GameServer>() != null)
                 enabled = false;
 
             transform.Rotate(0f, 0f, 0f);

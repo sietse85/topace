@@ -15,8 +15,8 @@ namespace Network
 
         private void Awake()
         {
-            networkTransformId = 0;
-            ownedByPlayerId = 0;
+            ownedByPlayerId = -1;
+            networkTransformId = -1;
             _client = FindObjectOfType<GameClient>();
             u = new NetworkTransformUpdate();
             u.HeaderByte = HeaderBytes.NetworkTransFormId;
@@ -29,11 +29,8 @@ namespace Network
         {
             if (_client != null)
             {
-                if (ownedByPlayerId > 0)
-                {
-                    if (ownedByPlayerId != _game.playerId)
-                        enabled = false;
-                }
+                if (ownedByPlayerId != _game.playerId)
+                    enabled = false;
                 StartCoroutine(SendUpdateToServer());
             }
             else
@@ -46,6 +43,8 @@ namespace Network
         {
             while (true)
             {
+                if (networkTransformId == -1)
+                    yield break;
                 u.LocX = networkTransform.position.x;
                 u.LocY = networkTransform.position.y;
                 u.LocZ = networkTransform.position.z;
