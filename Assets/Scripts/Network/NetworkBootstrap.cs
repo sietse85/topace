@@ -6,12 +6,11 @@ namespace Network
     {
         private bool _multiplayer = false;
 
-        private void Start()
+        private void OnEnable()
         {
             string[] args = System.Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length; i++)
             {
-                Debug.Log("ARG " + i + ": " + args[i]);
                 if (args[i] == "-dedicated")
                 {
                     _multiplayer = true;

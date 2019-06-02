@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using LiteNetLib;
 using UnityEngine;
 using Network;
@@ -70,24 +69,19 @@ namespace Server
                     // remove the player from the namelist
                     game.playerNames.Remove(i);
                     // remove the vehicle if it not used by anyone anymore
-                    if (!game.VehicleEntities[i].isOccupiedByOtherPlayer)
+                    if (!game.vehicleEntities[i].isOccupiedByOtherPlayer)
                     {
-                        game.VehicleEntities[i].processInTick = false;
+                        game.vehicleEntities[i].processInTick = false;
                         NetworkTransform[] networkTransforms =
-                        game.VehicleEntities[i].obj.GetComponentsInChildren<NetworkTransform>();
+                        game.vehicleEntities[i].obj.GetComponentsInChildren<NetworkTransform>();
                         foreach (NetworkTransform t in networkTransforms)
                         {
                             Debug.Log("Removing networktransformId: " + t.networkTransformId);
                             game.ticker.networkTransforms[t.networkTransformId].slotOccupied = false;
                             game.ticker.networkTransforms[t.networkTransformId].processInTick = false;
-                            
-//                            if (game.ticker.networkTransforms.ContainsKey(t.networkTransformId))
-//                            {
-//                                game.ticker.networkTransforms.Remove(t.networkTransformId);
-//                            }
                         }
-                        Destroy(game.VehicleEntities[i].obj);
-                        game.VehicleEntities[i].processInTick = false;
+                        Destroy(game.vehicleEntities[i].obj);
+                        game.vehicleEntities[i].processInTick = false;
                         Debug.Log("Sending the players to remove the vehicle for " + i);
                         game.vehicleDataHandler.SendRemoveVehicleByPlayerId(i);
                     }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 namespace VehicleFunctions
 {
@@ -23,7 +24,6 @@ namespace VehicleFunctions
         public float maxPitch;
         public float maxSpeed;
         public GameObject obj;
-        
         // in case the vehicle has manable turrets
         public bool isOccupiedByOtherPlayer;
         public byte[] config;

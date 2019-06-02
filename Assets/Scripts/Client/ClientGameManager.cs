@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using LiteNetLib;
 using Menu;
 using UnityEngine;
@@ -12,9 +13,11 @@ namespace Client
     {
         public GameClient client;
         public NetworkTransformStruct[] networkTransforms;
+        public VehicleEntity[] vehicleEntities;
+        public Player[] players;
+        public ProjectileReference[] projectiles; 
         private Dictionary<int, string> _playerNames;
         public Transform multiplayerMenu;
-        public VehicleEntity[] VehicleEntities;
         public Transform spawnMenu;
         public Transform mainMenu;
         public VehicleConstructor vc;
@@ -23,13 +26,19 @@ namespace Client
         public ClientVehicleDataHandler vehicleDataHandler;
         public NetworkTransformHandler networkTransformHandler;
         public VehicleController vehicleController;
-        public Player[] players;
         public int securityPin;
+        public uint bulletId;
+
+        private void Awake()
+        {
+            Debug.Log("A client manager awoke");
+        }
 
         private void Start()
         {
             networkTransforms = new NetworkTransformStruct[1024];
-            VehicleEntities = new VehicleEntity[254];
+            vehicleEntities = new VehicleEntity[254];
+            projectiles = new ProjectileReference[254 * 100];
             client = GetComponent<GameClient>();
             playerDataHandler = gameObject.GetComponent<ClientPlayerDataHandler>();
             vehicleDataHandler = gameObject.GetComponent<ClientVehicleDataHandler>();
@@ -37,7 +46,6 @@ namespace Client
             vehicleController = gameObject.GetComponent<VehicleController>();
             vc = gameObject.GetComponent<VehicleConstructor>();
             players = new Player[64];
-            Debug.Log(System.Runtime.InteropServices.Marshal.SizeOf(typeof(VehicleEntity)));
         }
 
         public void HandleReceived(NetPacketReader r)
@@ -70,6 +78,9 @@ namespace Client
                     break;
                 case HeaderBytes.SendPlayerData:
                     playerDataHandler.UpdatePlayerData(r);
+                    break;
+                case HeaderBytes.SendVehicleData:
+                    vehicleDataHandler.UpdateVehicleInfo(r);
                     break;
             }
         }

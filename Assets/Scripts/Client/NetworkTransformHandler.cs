@@ -17,7 +17,7 @@ namespace Client
         private byte[] float3Buf;
         private byte[] float4Buf;
         private byte[] transformIdBuf;
-        private byte[] playerIdBuf;
+        private byte playerIdBuf;
         private int tmpNetworkTransformId;
         private int tmpNetworkTransformPlayerId;
         private ByteHelper b;
@@ -27,7 +27,6 @@ namespace Client
             float3Buf = new byte[12];
             float4Buf = new byte[16];
             transformIdBuf = new byte[4];
-            playerIdBuf = new byte[4];
             _gameClient = GetComponent<GameClient>();
             _game = GetComponent<ClientGameManager>();
             loc = new Vector3();
@@ -41,7 +40,7 @@ namespace Client
         {
             byte[] bytes = r.GetRemainingBytes();
             int index = 0;
-            while (bytes[index] != 0x00)
+            while (index < bytes.Length)
             {
                 Buffer.BlockCopy(bytes, index, float3Buf, 0, sizeof(float) * 3);
                 index += sizeof(float) * 3;
@@ -49,12 +48,14 @@ namespace Client
                 index += sizeof(float) * 4;
                 Buffer.BlockCopy(bytes, index, transformIdBuf, 0, sizeof(int));
                 index += sizeof(int);
-                Buffer.BlockCopy(bytes, index, playerIdBuf, 0, sizeof(int));
+                playerIdBuf = bytes[index];
+                index += sizeof(byte);
 
                 loc = b.ByteToVector3(float3Buf);
                 rot = b.ByteToQuaternion(float4Buf);
+                
                 tmpNetworkTransformId = b.ByteToInt(transformIdBuf);
-                tmpNetworkTransformPlayerId = b.ByteToInt(playerIdBuf);
+                tmpNetworkTransformPlayerId = playerIdBuf;
                 if (tmpNetworkTransformPlayerId != _game.playerId)
                 {
                     _game.networkTransforms[tmpNetworkTransformId].transform.SetPositionAndRotation(loc, rot);
@@ -64,14 +65,9 @@ namespace Client
 
         public void SetTransformIds(NetPacketReader r)
         {
-            Debug.Log("set transform ids");
             vnt.Deserialize(r);
-            
-
-            NetworkTransform[] transforms = _game.VehicleEntities[vnt.PlayerId].obj.GetComponentsInChildren<NetworkTransform>();
-
+            NetworkTransform[] transforms = _game.vehicleEntities[vnt.PlayerId].obj.GetComponentsInChildren<NetworkTransform>();
             int i = 0;
-
             foreach (NetworkTransform t in transforms)
             {
                 t.SetPlayerId(vnt.PlayerId);

@@ -15,8 +15,8 @@ public class TurretSlot : MonoBehaviour
     public byte turretSlotNumber;
     public FireWeapon firePacket;
     public ClientGameManager client;
-    private bool isServer;
     private GameManager game;
+    private bool isServer;
     private float latencyCompensation;
     public int controllerByPlayerId;
 
@@ -37,7 +37,7 @@ public class TurretSlot : MonoBehaviour
         if (client is ClientGameManager)
         {
             firePacket.playerPin = client.securityPin;
-            firePacket.vehicleId = client.playerId;
+            firePacket.playerId = client.playerId;
             firePacket.projectileId = projectileId;
             isServer = false;
         }
@@ -53,8 +53,15 @@ public class TurretSlot : MonoBehaviour
         //able to fire
         if (!inCoolDown)
         {
+            
             if (!isServer)
             {
+                client.bulletId++;
+                if (client.bulletId == 100)
+                {
+                    client.bulletId = 0;
+                }
+                firePacket.bulletId = client.bulletId;
                 firePacket.weaponSlotFired = turretSlotNumber;
                 client.client.Send(firePacket);
             }
@@ -65,9 +72,25 @@ public class TurretSlot : MonoBehaviour
                 transform.position,
                 transform.rotation
             );
+
+            if (isServer)
+            {
+                game.projectiles[firePacket.playerId * 100 + firePacket.bulletId].obj = obj;
+            }
+            else
+            {
+                client.projectiles[firePacket.playerId * 100 + firePacket.bulletId].obj = obj;
+            }
+
             ProjectileEntity p = obj.GetComponent<ProjectileEntity>();
             p.timeToLive = Loader.instance.weapons[weaponDataBaseId].projectile.timeToLive;
             p.velocity = Loader.instance.weapons[weaponDataBaseId].projectile.projectileSpeed;
+            p.projectileId = projectileId;
+            if (!isServer)
+            {
+                p.doRayCast = true;
+
+            }
             
             StartCoroutine(InitiateCoolDown());
         }

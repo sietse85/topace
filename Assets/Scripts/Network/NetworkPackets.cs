@@ -314,26 +314,29 @@ namespace Network
     public struct FireWeapon : INetSerializable
     {
         public byte headerByte;
-        public byte vehicleId;
+        public byte playerId;
         public int playerPin;
         public int projectileId;
         public byte weaponSlotFired;
+        public uint bulletId;
         
         public void Serialize(NetDataWriter writer)
         {
             writer.Put(headerByte);
-            writer.Put(vehicleId);
+            writer.Put(playerId);
             writer.Put(playerPin);
             writer.Put(projectileId);
             writer.Put(weaponSlotFired);
+            writer.Put(bulletId);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            vehicleId = reader.GetByte();
+            playerId = reader.GetByte();
             playerPin = reader.GetInt();
             projectileId = reader.GetInt();
             weaponSlotFired = reader.GetByte();
+            bulletId = reader.GetUInt();
         }
     }
 }

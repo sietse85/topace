@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cooldown: 0
   inCoolDown: 0
-  prefab: {fileID: 0}
   weaponDataBaseId: 0
   projectileId: 0
+  turretSlotNumber: 0
+  client: {fileID: 0}
+  controllerByPlayerId: 0
 --- !u!1 &1166499526440852239
 GameObject:
   m_ObjectHideFlags: 0
@@ -28,7 +30,7 @@ GameObject:
   - component: {fileID: 7559356618082073082}
   - component: {fileID: 6665822622920068433}
   - component: {fileID: 7843499118084272883}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: shuttl
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -129,9 +131,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cooldown: 0
   inCoolDown: 0
-  prefab: {fileID: 0}
   weaponDataBaseId: 0
   projectileId: 0
+  turretSlotNumber: 0
+  client: {fileID: 0}
+  controllerByPlayerId: 0
 --- !u!1001 &376128927385187783
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -143,6 +147,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: cockpit
+      objectReference: {fileID: 0}
+    - target: {fileID: 2073409666572118544, guid: 0b11a064d5f89054284c8a999a081876,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 3070719114192525315, guid: 0b11a064d5f89054284c8a999a081876,
         type: 3}
@@ -234,6 +243,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: wingright
       objectReference: {fileID: 0}
+    - target: {fileID: 6282934085092765249, guid: 1fb86767a9a618f41b2bb684ee552f36,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 5279005025940050836, guid: 1fb86767a9a618f41b2bb684ee552f36,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -289,6 +303,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4131185035619909232, guid: 1fb86767a9a618f41b2bb684ee552f36,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 6228231592747466820, guid: 1fb86767a9a618f41b2bb684ee552f36,
         type: 3}
       propertyPath: m_LocalRotation.x
@@ -329,6 +348,11 @@ PrefabInstance:
       propertyPath: m_LocalScale.z
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4871931579582208930, guid: 1fb86767a9a618f41b2bb684ee552f36,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 426624638278141337, guid: 1fb86767a9a618f41b2bb684ee552f36, type: 3}
     - {fileID: 5904863304183270317, guid: 1fb86767a9a618f41b2bb684ee552f36, type: 3}
@@ -362,6 +386,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: hull
+      objectReference: {fileID: 0}
+    - target: {fileID: 1434845572221294490, guid: bad5bd040ff109e46ae11c368e62d31c,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     - target: {fileID: 6106422654209822298, guid: bad5bd040ff109e46ae11c368e62d31c,
         type: 3}
@@ -453,6 +482,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: tailwing
       objectReference: {fileID: 0}
+    - target: {fileID: 4256511879718608425, guid: c0d71e6acb758b8468498cef635c38f4,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 8422118308465550065, guid: c0d71e6acb758b8468498cef635c38f4,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -528,6 +562,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: wingleft
       objectReference: {fileID: 0}
+    - target: {fileID: 3550645419876740883, guid: 4b9cda38f58818f42abcea5b1355d178,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 3401855352727376582, guid: 4b9cda38f58818f42abcea5b1355d178,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -583,6 +622,11 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6855587591462567714, guid: 4b9cda38f58818f42abcea5b1355d178,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: 3465526321330716950, guid: 4b9cda38f58818f42abcea5b1355d178,
         type: 3}
       propertyPath: m_LocalRotation.x
@@ -622,6 +666,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalScale.z
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2732428802939050736, guid: 4b9cda38f58818f42abcea5b1355d178,
+        type: 3}
+      propertyPath: m_Layer
+      value: 8
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 7177812740113990859, guid: 4b9cda38f58818f42abcea5b1355d178, type: 3}

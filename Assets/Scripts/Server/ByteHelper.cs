@@ -8,6 +8,7 @@ namespace Server
         private byte[] float3Buf;
         private byte[] float4Buf;
         private byte[] intBuf;
+        private byte[] floatBuf;
         private Vector3 tmpVector3;
         private Quaternion tmpQuaternion;
         private int tmpInt;
@@ -17,6 +18,7 @@ namespace Server
             float3Buf = new byte[12];
             float4Buf = new byte[16];
             intBuf = new byte[4];
+            floatBuf = new byte[4];
             tmpVector3 = new Vector3();
             tmpQuaternion = new Quaternion();
         }
@@ -36,6 +38,12 @@ namespace Server
             Buffer.BlockCopy(BitConverter.GetBytes(q.z), 0, float4Buf, 8, 4);
             Buffer.BlockCopy(BitConverter.GetBytes(q.w), 0, float4Buf, 12, 4);
             return float4Buf;
+        }
+
+        public byte[] FloatToByte(float f)
+        {
+            Buffer.BlockCopy(BitConverter.GetBytes(f),0, floatBuf, 0, 4);
+            return floatBuf;
         }
 
         public byte[] IntToByte(int i)
@@ -61,10 +69,14 @@ namespace Server
             return tmpQuaternion;
         }
 
+        public float ByteToFloat(byte[] bytes)
+        {
+            return BitConverter.ToSingle(bytes,0);
+        }
+
         public int ByteToInt(byte[] bytes)
         {
             return BitConverter.ToInt32(bytes, 0);
-
         }
     }
 }

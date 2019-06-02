@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using LiteNetLib;
 using UnityEngine;
 using Network;
@@ -9,9 +10,10 @@ namespace Server
     public class GameManager : MonoBehaviour
     {
         public Player[] players;
+        public VehicleEntity[] vehicleEntities;
+        public ProjectileReference[] projectiles; 
         public Dictionary<int, string> playerNames;
         public Dictionary<int, TurretSlot[]> turrets;
-        public VehicleEntity[] VehicleEntities;
         public GameServer gameServer;
         public PlayerDataHandler playerDataHandler;
         public VehicleDataHandler vehicleDataHandler;
@@ -26,7 +28,8 @@ namespace Server
             turrets = new Dictionary<int, TurretSlot[]>(gameServer.maxPlayers);
             players = new Player[gameServer.maxPlayers];
             playerNames = new Dictionary<int, string>(gameServer.maxPlayers);
-            VehicleEntities = new VehicleEntity[gameServer.maxPlayers];
+            projectiles = new ProjectileReference[gameServer.maxPlayers * 100];
+            vehicleEntities = new VehicleEntity[gameServer.maxPlayers];
             playerDataHandler = gameObject.GetComponent<PlayerDataHandler>();
             vehicleDataHandler = gameObject.GetComponent<VehicleDataHandler>();
             vc = gameObject.GetComponent<VehicleConstructor>();

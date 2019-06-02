@@ -4,10 +4,7 @@ namespace Network
 {
     public struct NetworkTransformStruct
     {
-        public Vector3 position;
-        public Quaternion rotation;
-        public int playerId;
-        public int networkTransformId;
+        public byte playerId;
         public bool processInTick;
         public bool slotOccupied;
         public Transform transform;

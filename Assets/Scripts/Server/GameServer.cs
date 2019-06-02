@@ -64,7 +64,7 @@ namespace Server
             }
         }
         
-        public void SendBytesToAll(byte[] buf)
+        public void SendBytesToAll(byte[] buf, int length)
         {
             if (_game == null)
             {
@@ -74,7 +74,7 @@ namespace Server
             for (int i = 0; i < _game.players.Length; i++) {
                 if (_game.players[i].slotOccupied)
                 {
-                    _game.players[i].peer.Send(buf, DeliveryMethod.ReliableUnordered);
+                    _game.players[i].peer.Send(buf, 0, length, DeliveryMethod.ReliableUnordered);
                 }
             }
         }

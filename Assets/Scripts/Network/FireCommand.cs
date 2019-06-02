@@ -5,6 +5,7 @@ namespace Network
         public byte weaponSlotFired;
         public int vehicleId;
         public int projectileId;
+        public uint bulletCount;
         public bool process;
     }
 }
