@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using LiteNetLib;
 using LiteNetLib.Utils;
-using Network;
 using UnityEngine;
 
 namespace Server
@@ -17,6 +14,7 @@ namespace Server
         public int maxPlayers = 64;
         public int port = 5000;
         public string ip = "127.0.0.1";
+        public float ticksPerSecond;
         
         //send the networktransfrom  updates to client each ... seconds
         public float updateSpeed = 0.1f;
@@ -70,13 +68,7 @@ namespace Server
         {
             if (_game == null)
             {
-                Debug.Log("Gamemanager null in Gameserver 72");
                 return;
-            }
-
-            if (buf[0] == HeaderBytes.SendPlayerData)
-            {
-                Debug.Log("Sending player data to clients");
             }
 
             for (int i = 0; i < _game.players.Length; i++) {

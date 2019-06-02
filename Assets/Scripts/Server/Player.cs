@@ -5,6 +5,7 @@ namespace Server
     public struct Player
     {
         public bool slotOccupied;
+        public int securityPin;
         public int latency;
         public int score;
         public int kills;

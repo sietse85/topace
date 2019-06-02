@@ -13,6 +13,7 @@ namespace Network
         private GameManager _serverGame;
         private ClientGameManager _clientGame;
         private NetworkTransformsForVehicle vnt;
+        private Ticker ticker;
 
         private void Start()
         {
@@ -21,6 +22,7 @@ namespace Network
 
             vnt = new NetworkTransformsForVehicle();
             vnt.HeaderByte = HeaderBytes.NetworkTransFormsForVehicle;
+            ticker = FindObjectOfType<Ticker>();
         }
 
         public void SpawnExistingVehiclesOnClient(NetPeer peer, int playerId)
@@ -33,10 +35,10 @@ namespace Network
                 if(!v.processInTick)
                     continue;
                 
-                Vector3 pos = _serverGame.vehicles[v.playerId].transform.position;
-                Quaternion rot = _serverGame.vehicles[v.playerId].transform.rotation; 
+                Vector3 pos = _serverGame.VehicleEntities[v.playerId].obj.transform.position;
+                Quaternion rot = _serverGame.VehicleEntities[v.playerId].obj.transform.rotation; 
                 ConstructVehicleSpawnPacket(v.playerId, v.vehicleDatabaseId, pos, rot, v.config, peer);
-                NetworkTransform[] childs = _serverGame.vehicles[v.playerId].GetComponentsInChildren<NetworkTransform>();
+                NetworkTransform[] childs = _serverGame.VehicleEntities[v.playerId].obj.GetComponentsInChildren<NetworkTransform>();
                 int[] ntIds = new int[childs.Length];
                 int i = 0;
                 foreach (NetworkTransform t in childs)
@@ -61,49 +63,44 @@ namespace Network
             ConstructVehicle(n.PlayerId, n.VehicleDatabaseId, pos, rot, n.Config, true);
         }
 
-        public void ConstructVehicle(int playerId, int vehicleDatabaseId, Vector3 pos, Quaternion rot,
-            byte[] config, bool skipServer = false)
+        public void ConstructVehicle(byte playerId, int vehicleDatabaseId, Vector3 pos, Quaternion rot,
+            byte[] config, bool isServer = false)
         {
             Vehicle v = Loader.instance.vehicles[vehicleDatabaseId];
             GameObject obj = Instantiate(v.prefab, pos, rot);
 
+            NetworkTransform[] childs = obj.GetComponentsInChildren<NetworkTransform>();
+            TurretSlot[] turretSlots = obj.GetComponentsInChildren<TurretSlot>();
+            byte currentSlot = 0;
+            foreach (TurretSlot slot in turretSlots)
+            {
+                slot.turretSlotNumber = currentSlot;
+                slot.controllerByPlayerId = playerId;
+                currentSlot++;
+            }
+            
             CreateWeaponsOnVehicle(obj, config, v);
 
-            if (_serverGame != null && !skipServer)
+            if (_serverGame != null && !isServer)
             {
-                NetworkTransform[] childs = obj.GetComponentsInChildren<NetworkTransform>();
-            
-
-                int[] ntIds = new int[childs.Length];
-                int i = 0;
-
-                foreach (NetworkTransform t in childs)
-                {
-                    _serverGame.networkTransformId++;
-                    t.SetTransformId(_serverGame.networkTransformId);
-                    t.SetPlayerId(playerId);
-                    _serverGame.ticker.networkTransforms.Add(_serverGame.networkTransformId, t);
-                    ntIds[i] = _serverGame.networkTransformId;
-                    i++;
-                }
-
+                _serverGame.turrets[playerId] = turretSlots;
+                int[] ntIds = AssignNewNetworkTransforms(ref childs, playerId, pos, rot);
                 ConstructVehicleSpawnPacket(playerId, vehicleDatabaseId, pos, rot, config, null);
-                if (_serverGame.vehicles.ContainsKey(playerId))
-                    _serverGame.vehicles.Remove(playerId);
-                _serverGame.vehicles.Add(playerId, obj);
+                _serverGame.VehicleEntities[playerId].obj = obj;
                 AddVehicleToServerVehicleEntitiesList(playerId, v, vehicleDatabaseId, config);
 
                 vnt.PlayerId = playerId;
                 vnt.NetworkTransformIds = ntIds;
+                foreach (int i in ntIds)
+                {
+                    Debug.Log("Sending id " + ntIds[i]);
+                }
                 _serverGame.gameServer.SendToAll(vnt);
             }
 
             if (_clientGame != null)
             {
-                if (!_clientGame._vehicles.ContainsKey(playerId))
-                    _clientGame._vehicles.Remove(playerId);
-                
-                _clientGame._vehicles.Add(playerId, obj);
+                _clientGame.VehicleEntities[playerId].obj = obj;
 
                 //if the vehicle is spawned for this player
                 if (playerId == _clientGame.playerId)
@@ -113,7 +110,7 @@ namespace Network
             }
         }
 
-        public void ConstructVehicleSpawnPacket(int playerId, int vehicleDatabaseId, Vector3 pos,
+        public void ConstructVehicleSpawnPacket(byte playerId, int vehicleDatabaseId, Vector3 pos,
             Quaternion rot, byte[] config, NetPeer peer)
         {
             Debug.Log("Spawning existing vehicle from the gameworld on this client..." + playerId);
@@ -131,7 +128,7 @@ namespace Network
             }
         }
 
-        public void AddVehicleToServerVehicleEntitiesList(int playerId, Vehicle v, int vehicleDatabaseId, byte[] config)
+        public void AddVehicleToServerVehicleEntitiesList(byte playerId, Vehicle v, int vehicleDatabaseId, byte[] config)
         {
             _serverGame.VehicleEntities[playerId].playerId = playerId;
             _serverGame.VehicleEntities[playerId].vehicleDatabaseId = vehicleDatabaseId;
@@ -154,6 +151,43 @@ namespace Network
             {
                 slots[i].InitTurret(Loader.instance.weapons[config[i]]);
             }
+        }
+
+        public int GetNextFreeNetworkTransformSlot()
+        {
+            for (int i = 0; i < ticker.networkTransforms.Length; i++)
+            {
+                if (!ticker.networkTransforms[i].slotOccupied)
+                {
+                    ticker.networkTransforms[i].slotOccupied = true;
+                    Debug.Log("Next free slot is " + i);
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        public int[] AssignNewNetworkTransforms(ref NetworkTransform[] childs, int playerId, Vector3 position, Quaternion rotation)
+        {
+            int[] ntIds = new int[childs.Length];
+            int i = 0;
+
+            foreach (NetworkTransform t in childs)
+            {
+                int newNetworkTransformId = GetNextFreeNetworkTransformSlot();
+                t.SetTransformId(newNetworkTransformId);
+                t.SetPlayerId(playerId);
+                _serverGame.ticker.networkTransforms[newNetworkTransformId].position = position;
+                _serverGame.ticker.networkTransforms[newNetworkTransformId].rotation = rotation;
+                _serverGame.ticker.networkTransforms[newNetworkTransformId].playerId = playerId;
+                _serverGame.ticker.networkTransforms[newNetworkTransformId].processInTick = true;
+                _serverGame.ticker.networkTransforms[newNetworkTransformId].transform = t.transform;
+                ntIds[i] = newNetworkTransformId;
+                i++;
+            }
+
+            return ntIds;
         }
     }
     

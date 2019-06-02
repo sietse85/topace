@@ -29,10 +29,12 @@ namespace Client
             _gameClient.Send(packet); 
         }
 
-        public void SetPlayerId(int playerId)
+        public void SetPlayerId(NetPacketReader r)
         {
-            Debug.Log("Client playerId = " + playerId);
-            _game.playerId = playerId;
+            _game.playerId = r.GetByte();
+            Debug.Log("Client playerId = " + _game.playerId);
+            _game.securityPin = r.GetInt();
+            Debug.Log("Client securityPin = " + _game.securityPin);
         }
 
         public void UpdatePlayerData(NetPacketReader r)

@@ -50,8 +50,6 @@ namespace Client
                 Buffer.BlockCopy(bytes, index, transformIdBuf, 0, sizeof(int));
                 index += sizeof(int);
                 Buffer.BlockCopy(bytes, index, playerIdBuf, 0, sizeof(int));
-                //increase to skip additional header bytes
-                index += sizeof(int) + 1;
 
                 loc = b.ByteToVector3(float3Buf);
                 rot = b.ByteToQuaternion(float4Buf);
@@ -59,7 +57,7 @@ namespace Client
                 tmpNetworkTransformPlayerId = b.ByteToInt(playerIdBuf);
                 if (tmpNetworkTransformPlayerId != _game.playerId)
                 {
-                    _game.networkTransforms[tmpNetworkTransformId].SetPositionAndRotation(loc, rot);
+                    _game.networkTransforms[tmpNetworkTransformId].transform.SetPositionAndRotation(loc, rot);
                 }
             }
         }
@@ -68,8 +66,9 @@ namespace Client
         {
             Debug.Log("set transform ids");
             vnt.Deserialize(r);
+            
 
-            NetworkTransform[] transforms = _game._vehicles[vnt.PlayerId].GetComponentsInChildren<NetworkTransform>();
+            NetworkTransform[] transforms = _game.VehicleEntities[vnt.PlayerId].obj.GetComponentsInChildren<NetworkTransform>();
 
             int i = 0;
 
@@ -77,7 +76,10 @@ namespace Client
             {
                 t.SetPlayerId(vnt.PlayerId);
                 t.SetTransformId(vnt.NetworkTransformIds[i]);
-                _game.networkTransforms.Add(vnt.NetworkTransformIds[i], t.networkTransform);
+                Debug.Log(vnt.NetworkTransformIds[i]);
+                _game.networkTransforms[vnt.NetworkTransformIds[i]].transform = t.networkTransform;
+                _game.networkTransforms[vnt.NetworkTransformIds[i]].slotOccupied = true;
+                _game.networkTransforms[vnt.NetworkTransformIds[i]].processInTick = true;
                 i++;
                 if (_game.playerId == vnt.PlayerId)
                 {

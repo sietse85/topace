@@ -19,10 +19,10 @@ namespace Client
         {
             Debug.Log("test spawn");
             byte[] config = new byte[8];
-            config[0] = (byte) 1;
-            config[1] = (byte) 1;
+            config[0] = 1;
+            config[1] = 1;
             // since spawn menu isnt done yet, we spawn shuttles for testing (1)
-            RequestSpawn packet = new RequestSpawn(_game.playerId, 1, config);
+            RequestSpawn packet = new RequestSpawn(_game.playerId, _game.securityPin, 1, config);
             _gameClient.Send(packet);
         }
 
@@ -31,20 +31,17 @@ namespace Client
             RemoveVehicle rv = new RemoveVehicle();
             rv.Deserialize(r);
 
-            if (_game._vehicles.ContainsKey(rv.playerId))
+            NetworkTransform[] networkTransforms =
+                _game.VehicleEntities[rv.playerId].obj.GetComponentsInChildren<NetworkTransform>();
+            
+            foreach (NetworkTransform t in networkTransforms)
             {
-                NetworkTransform[] networkTransforms =
-                    _game._vehicles[rv.playerId].GetComponentsInChildren<NetworkTransform>();
-                foreach (NetworkTransform t in networkTransforms)
-                {
-                    if (_game.networkTransforms.ContainsKey(t.networkTransformId))
-                    {
-                        _game.networkTransforms.Remove(t.networkTransformId);
-                    }
-                }
-                Destroy(_game._vehicles[rv.playerId]);
-                _game._vehicles.Remove(rv.playerId);
+                _game.networkTransforms[t.networkTransformId].slotOccupied = false;
+                _game.networkTransforms[t.networkTransformId].processInTick = false;
             }
+            Destroy(_game.VehicleEntities[rv.playerId].obj);
+            _game.VehicleEntities[rv.playerId].processInTick = false;
+    
 
             Debug.Log("Removed vehicle from player " + rv.playerId);
         }

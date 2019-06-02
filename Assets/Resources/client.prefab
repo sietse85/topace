@@ -50,7 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47b2ad188a9f44645ac58e4e48a73910, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  updateSpeedNetworktransforms: 0.1
+  updateSpeedNetworktransforms: 0.03
 --- !u!114 &405327462808472507
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -63,6 +63,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6abbde81a3f395948960b7671a9af75b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  client: {fileID: 0}
   multiplayerMenu: {fileID: 0}
   spawnMenu: {fileID: 0}
   mainMenu: {fileID: 0}
@@ -71,7 +72,8 @@ MonoBehaviour:
   playerDataHandler: {fileID: 0}
   vehicleDataHandler: {fileID: 0}
   networkTransformHandler: {fileID: 0}
-  VehicleController: {fileID: 0}
+  vehicleController: {fileID: 0}
+  securityPin: 0
 --- !u!114 &405327462808472506
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -149,7 +151,7 @@ MonoBehaviour:
   speedPitch: 0
   currentSpeed: 0
   maxSpeed: 0
-  VehicleControlled: {fileID: 0}
-  VehicleControl: 0
-  VehicleInitialized: 0
+  vehicleControlled: {fileID: 0}
+  vehicleControl: 0
+  vehicleInitialized: 0
   game: {fileID: 0}

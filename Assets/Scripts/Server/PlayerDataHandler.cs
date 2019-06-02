@@ -17,9 +17,9 @@ namespace Server
             game = GetComponent<GameManager>();
         }
 
-        public int GetNextAvailablePlayerSlot()
+        public byte GetNextAvailablePlayerSlot()
         {
-            for (int i = 0; i < game.players.Length; i++)
+            for (byte i = 0; i < game.players.Length; i++)
             {
                 if (!game.players[i].slotOccupied)
                 {
@@ -28,38 +28,45 @@ namespace Server
                     return i;
                 }
             }
-            // 999 all slots are occupied
-            return 999;
+            // 0xff 255 all slots are occupied
+            return 0xff;
         }
 
         public void ReceivePlayerName(NetPeer peer, NetPacketReader r)
         {
             SendUserNameToServer n = new SendUserNameToServer();
             n.Deserialize(r);
-            int playerId = GetNextAvailablePlayerSlot();
+            byte playerId = GetNextAvailablePlayerSlot();
+            System.Random rnd = new System.Random();
+            int securityPin = rnd.Next(0, 2147483647);
             game.players[playerId].playerName = n.PlayerName;
             game.players[playerId].peer = peer;
+            game.players[playerId].securityPin = securityPin;
             game.players[playerId].processInTick = true;
-            SendPlayerId(peer, playerId);
+            SendPlayerId(peer, playerId, securityPin);
             game.vc.SpawnExistingVehiclesOnClient(peer, playerId);
         }
 
-        public void SendPlayerId(NetPeer peer, int playerId)
+        public void SendPlayerId(NetPeer peer, byte playerId, int securityPin)
         {
-            SendPlayerId packet = new SendPlayerId(playerId);
+            SendPlayerId packet = new SendPlayerId(playerId, securityPin);
             _gameServer.Send(packet, peer);
         }
 
         public void RemovePlayer(NetPeer peer)
         {
-            for (int i = 0; i < game.players.Length; i++)
+            for (byte i = 0; i < game.players.Length; i++)
             {
+                if (game.players[i].peer == null)
+                    continue;
+                
                 if (game.players[i].peer.Id == peer.Id)
                 {
                     Debug.Log("Player was disconnected, freeing slot and check if vehicle and networktransforms must be removed");
                     // free this player slot
                     game.players[i].processInTick = false;
                     game.players[i].slotOccupied = false;
+                    game.players[i].peer = null;
                     // remove the player from the namelist
                     game.playerNames.Remove(i);
                     // remove the vehicle if it not used by anyone anymore
@@ -67,17 +74,20 @@ namespace Server
                     {
                         game.VehicleEntities[i].processInTick = false;
                         NetworkTransform[] networkTransforms =
-                        game.vehicles[i].GetComponentsInChildren<NetworkTransform>();
+                        game.VehicleEntities[i].obj.GetComponentsInChildren<NetworkTransform>();
                         foreach (NetworkTransform t in networkTransforms)
                         {
                             Debug.Log("Removing networktransformId: " + t.networkTransformId);
-                            if (game.ticker.networkTransforms.ContainsKey(t.networkTransformId))
-                            {
-                                game.ticker.networkTransforms.Remove(t.networkTransformId);
-                            }
+                            game.ticker.networkTransforms[t.networkTransformId].slotOccupied = false;
+                            game.ticker.networkTransforms[t.networkTransformId].processInTick = false;
+                            
+//                            if (game.ticker.networkTransforms.ContainsKey(t.networkTransformId))
+//                            {
+//                                game.ticker.networkTransforms.Remove(t.networkTransformId);
+//                            }
                         }
-                        Destroy(game.vehicles[i]);
-                        game.vehicles.Remove(i);
+                        Destroy(game.VehicleEntities[i].obj);
+                        game.VehicleEntities[i].processInTick = false;
                         Debug.Log("Sending the players to remove the vehicle for " + i);
                         game.vehicleDataHandler.SendRemoveVehicleByPlayerId(i);
                     }

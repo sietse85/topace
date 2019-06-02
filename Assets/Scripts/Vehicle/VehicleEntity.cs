@@ -1,8 +1,10 @@
+using UnityEngine;
+
 namespace VehicleFunctions
 {
     public struct VehicleEntity
     {
-        public int playerId;
+        public byte playerId;
         public int vehicleDatabaseId;
         public bool processInTick;
         public float currentHealth;
@@ -20,6 +22,7 @@ namespace VehicleFunctions
         public float maxRoll;
         public float maxPitch;
         public float maxSpeed;
+        public GameObject obj;
         
         // in case the vehicle has manable turrets
         public bool isOccupiedByOtherPlayer;
@@ -27,7 +30,6 @@ namespace VehicleFunctions
 
         public void ApplyConfigurationOfVehicle(byte[] config)
         {
-            this.config = new byte[8];
             this.config = config;
             maxHealth = currentHealth;
             maxShield = currentShield;

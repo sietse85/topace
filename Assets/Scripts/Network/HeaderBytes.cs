@@ -14,5 +14,6 @@ namespace Network
         public const byte NetworkTransFormsForVehicle = 0x0A;
         public const byte RemoveVehicle = 0x0B;
         public const byte SendPlayerData = 0x0C;
+        public const byte FireWeapon = 0x0D;
     }
 }

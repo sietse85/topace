@@ -23,6 +23,7 @@ namespace VehicleFunctions
         public bool vehicleInitialized;
         public ClientGameManager game;
         private FoiledWings[] _wings;
+        private TurretSlot[] turrets;
 
         private void Start()
         {
@@ -30,9 +31,10 @@ namespace VehicleFunctions
         }
 
         // Start is called before the first frame update
-        void InitShip(int vehicleDatabaseId)
+        void InitVehicle(int vehicleDatabaseId, GameObject vehicle)
         {
             Vehicle V = Loader.instance.vehicles[vehicleDatabaseId];
+            vehicleControlled = vehicle;
             maxSpeed = V.maximumSpeed;
             speedYaw = V.yawSpeed;
             speedPitch = V.pitchSpeed;
@@ -42,6 +44,8 @@ namespace VehicleFunctions
             pitch = 0f;
             yaw = 0f;
             roll = 0f;
+            turrets = vehicleControlled.GetComponentsInChildren<TurretSlot>();
+            Debug.Log("Ship has " + turrets.Length + " turrets");
         }
 
         // Update is called once per frame
@@ -79,6 +83,13 @@ namespace VehicleFunctions
 
             float fire = Input.GetAxisRaw("Fire3");
 
+            if (fire > 0)
+            {
+                foreach (TurretSlot slot in turrets)
+                {
+                    slot.Fire();
+                }
+            }
         }
 
         private void FoilWings()
@@ -107,11 +118,10 @@ namespace VehicleFunctions
         {
             if (!vehicleInitialized)
             {
-                InitShip(vehicleDatabaseId);
+                InitVehicle(vehicleDatabaseId, vehicle);
                 vehicleInitialized = true;
             }
 
-            vehicleControlled = vehicle;
             vehicleControl = true;
             _vTransform = vehicleControlled.transform;
             game.ShowVehicleUI();

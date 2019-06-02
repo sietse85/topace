@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using Client;
 using UnityEngine;
 
@@ -24,7 +25,6 @@ namespace Network
             networkTransform = gameObject.transform;
         }
 
-        // Start is called before the first frame update
         public void InitUpdates()
         {
             if (_client != null)
@@ -54,6 +54,7 @@ namespace Network
                 u.RotW = networkTransform.rotation.w;
                 u.NetworkTransformId = networkTransformId;
                 u.PlayerId = _game.playerId;
+                u.PlayerPin = _game.securityPin;
                 _client.Send(u);
                 yield return new WaitForSeconds(_client.updateSpeedNetworktransforms);
             }

@@ -10,8 +10,7 @@ namespace Server
     {
         public Player[] players;
         public Dictionary<int, string> playerNames;
-        public bool[] playerSlots;
-        public Dictionary<int, GameObject> vehicles;
+        public Dictionary<int, TurretSlot[]> turrets;
         public VehicleEntity[] VehicleEntities;
         public GameServer gameServer;
         public PlayerDataHandler playerDataHandler;
@@ -24,11 +23,10 @@ namespace Server
         void Awake()
         {
             gameServer = GetComponent<GameServer>();
-            vehicles = new Dictionary<int, GameObject>();
+            turrets = new Dictionary<int, TurretSlot[]>(gameServer.maxPlayers);
             players = new Player[gameServer.maxPlayers];
-            playerNames = new Dictionary<int, string>();
+            playerNames = new Dictionary<int, string>(gameServer.maxPlayers);
             VehicleEntities = new VehicleEntity[gameServer.maxPlayers];
-            playerSlots = new bool[gameServer.maxPlayers];
             playerDataHandler = gameObject.GetComponent<PlayerDataHandler>();
             vehicleDataHandler = gameObject.GetComponent<VehicleDataHandler>();
             vc = gameObject.GetComponent<VehicleConstructor>();
@@ -45,6 +43,11 @@ namespace Server
         {
             byte header = r.GetByte();
 
+            if (header != HeaderBytes.NetworkTransFormId)
+            {
+                Debug.Log("header " + header);
+            }
+
             switch (header)
             {
                 case HeaderBytes.SendUserNameToServer:
@@ -55,6 +58,9 @@ namespace Server
                     break;
                 case HeaderBytes.NetworkTransFormId:
                     vehicleDataHandler.UpdateVehicleTransform(r);
+                    break;
+                case HeaderBytes.FireWeapon:
+                    ticker.AddFireCommand(r);
                     break;
             }
         }

@@ -10,32 +10,34 @@ namespace Client
 {
     public class ClientGameManager : MonoBehaviour
     {
-        private GameClient _gameClient;
-        public Dictionary<int, GameObject> _vehicles;
+        public GameClient client;
+        public NetworkTransformStruct[] networkTransforms;
         private Dictionary<int, string> _playerNames;
         public Transform multiplayerMenu;
+        public VehicleEntity[] VehicleEntities;
         public Transform spawnMenu;
         public Transform mainMenu;
-        public Dictionary<int, Transform> networkTransforms;
         public VehicleConstructor vc;
-        public int playerId;
+        public byte playerId;
         public ClientPlayerDataHandler playerDataHandler;
         public ClientVehicleDataHandler vehicleDataHandler;
         public NetworkTransformHandler networkTransformHandler;
         public VehicleController vehicleController;
         public Player[] players;
+        public int securityPin;
 
         private void Start()
         {
-            _gameClient = GetComponent<GameClient>();
+            networkTransforms = new NetworkTransformStruct[1024];
+            VehicleEntities = new VehicleEntity[254];
+            client = GetComponent<GameClient>();
             playerDataHandler = gameObject.GetComponent<ClientPlayerDataHandler>();
             vehicleDataHandler = gameObject.GetComponent<ClientVehicleDataHandler>();
             networkTransformHandler = gameObject.GetComponent<NetworkTransformHandler>();
             vehicleController = gameObject.GetComponent<VehicleController>();
-            _vehicles = new Dictionary<int, GameObject>();
-            networkTransforms = new Dictionary<int, Transform>();
             vc = gameObject.GetComponent<VehicleConstructor>();
             players = new Player[64];
+            Debug.Log(System.Runtime.InteropServices.Marshal.SizeOf(typeof(VehicleEntity)));
         }
 
         public void HandleReceived(NetPacketReader r)
@@ -48,7 +50,7 @@ namespace Client
                     playerDataHandler.SendPlayerName();
                     break;
                 case HeaderBytes.SendPlayerId:
-                    playerDataHandler.SetPlayerId(r.GetInt());
+                    playerDataHandler.SetPlayerId(r);
                     vehicleDataHandler.TestSpawn();
                     break;
                 case HeaderBytes.OpenSpawnMenuOnClient:

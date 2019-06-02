@@ -21,3 +21,4 @@ MonoBehaviour:
   applyDrop: 0
   startDropAfterDisctance: 0
   dropSpeed: 0
+  timeToLive: 100
