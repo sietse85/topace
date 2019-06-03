@@ -6,23 +6,13 @@ namespace Server
 {
     public class PlayerDataHandler : MonoBehaviour
     {
-
-        private GameServer _gameServer;
-        private GameManager game;
-
-        private void Start()
+       public byte GetNextAvailablePlayerSlot()
         {
-            _gameServer = GetComponent<GameServer>();
-            game = GetComponent<GameManager>();
-        }
-
-        public byte GetNextAvailablePlayerSlot()
-        {
-            for (byte i = 0; i < game.players.Length; i++)
+            for (byte i = 0; i < GameManager.instance.players.Length; i++)
             {
-                if (!game.players[i].slotOccupied)
+                if (!GameManager.instance.players[i].slotOccupied)
                 {
-                    game.players[i].slotOccupied = true;
+                    GameManager.instance.players[i].slotOccupied = true;
                     Debug.Log("The next free playerslot = " + i);
                     return i;
                 }
@@ -38,52 +28,52 @@ namespace Server
             byte playerId = GetNextAvailablePlayerSlot();
             System.Random rnd = new System.Random();
             int securityPin = rnd.Next(0, 2147483647);
-            game.players[playerId].playerName = n.PlayerName;
-            game.players[playerId].peer = peer;
-            game.players[playerId].securityPin = securityPin;
-            game.players[playerId].processInTick = true;
+            GameManager.instance.players[playerId].playerName = n.PlayerName;
+            GameManager.instance.players[playerId].peer = peer;
+            GameManager.instance.players[playerId].securityPin = securityPin;
+            GameManager.instance.players[playerId].processInTick = true;
             SendPlayerId(peer, playerId, securityPin);
-            game.vc.SpawnExistingVehiclesOnClient(peer, playerId);
+            GameManager.instance.vc.SpawnExistingVehiclesOnClient(peer, playerId);
         }
 
         public void SendPlayerId(NetPeer peer, byte playerId, int securityPin)
         {
             SendPlayerId packet = new SendPlayerId(playerId, securityPin);
-            _gameServer.Send(packet, peer);
+            GameServer.instance.Send(packet, peer);
         }
 
         public void RemovePlayer(NetPeer peer)
         {
-            for (byte i = 0; i < game.players.Length; i++)
+            for (byte i = 0; i < GameManager.instance.players.Length; i++)
             {
-                if (game.players[i].peer == null)
+                if (GameManager.instance.players[i].peer == null)
                     continue;
                 
-                if (game.players[i].peer.Id == peer.Id)
+                if (GameManager.instance.players[i].peer.Id == peer.Id)
                 {
                     Debug.Log("Player was disconnected, freeing slot and check if vehicle and networktransforms must be removed");
                     // free this player slot
-                    game.players[i].processInTick = false;
-                    game.players[i].slotOccupied = false;
-                    game.players[i].peer = null;
+                    GameManager.instance.players[i].processInTick = false;
+                    GameManager.instance.players[i].slotOccupied = false;
+                    GameManager.instance.players[i].peer = null;
                     // remove the player from the namelist
-                    game.playerNames.Remove(i);
+                    GameManager.instance.playerNames.Remove(i);
                     // remove the vehicle if it not used by anyone anymore
-                    if (!game.vehicleEntities[i].isOccupiedByOtherPlayer)
+                    if (!GameManager.instance.vehicleEntities[i].isOccupiedByOtherPlayer)
                     {
-                        game.vehicleEntities[i].processInTick = false;
+                        GameManager.instance.vehicleEntities[i].processInTick = false;
                         NetworkTransform[] networkTransforms =
-                        game.vehicleEntities[i].obj.GetComponentsInChildren<NetworkTransform>();
+                        GameManager.instance.vehicleEntities[i].obj.GetComponentsInChildren<NetworkTransform>();
                         foreach (NetworkTransform t in networkTransforms)
                         {
                             Debug.Log("Removing networktransformId: " + t.networkTransformId);
-                            game.ticker.networkTransforms[t.networkTransformId].slotOccupied = false;
-                            game.ticker.networkTransforms[t.networkTransformId].processInTick = false;
+                            GameManager.instance.ticker.networkTransforms[t.networkTransformId].slotOccupied = false;
+                            GameManager.instance.ticker.networkTransforms[t.networkTransformId].processInTick = false;
                         }
-                        Destroy(game.vehicleEntities[i].obj);
-                        game.vehicleEntities[i].processInTick = false;
+                        Destroy(GameManager.instance.vehicleEntities[i].obj);
+                        GameManager.instance.vehicleEntities[i].processInTick = false;
                         Debug.Log("Sending the players to remove the vehicle for " + i);
-                        game.vehicleDataHandler.SendRemoveVehicleByPlayerId(i);
+                        GameManager.instance.vehicleDataHandler.SendRemoveVehicleByPlayerId(i);
                     }
                 }
             }
@@ -91,13 +81,13 @@ namespace Server
 
         public void UpdateLatencyOfPlayer(NetPeer peer, int latency)
         {
-            for (int i = 0; i < game.players.Length; i++)
+            for (int i = 0; i < GameManager.instance.players.Length; i++)
             {
-                if (game.players[i].slotOccupied)
+                if (GameManager.instance.players[i].slotOccupied)
                 {
-                    if (game.players[i].peer.Id == peer.Id)
+                    if (GameManager.instance.players[i].peer.Id == peer.Id)
                     {
-                        game.players[i].latency = latency;
+                        GameManager.instance.players[i].latency = latency;
                     }
                 }
             }
@@ -106,7 +96,7 @@ namespace Server
         public void HandleNewConnection(NetPeer peer)
         {
             AskClientForUsername askname = new AskClientForUsername(0x01);
-            _gameServer.Send(askname, peer);
+            GameServer.instance.Send(askname, peer);
         }
     }
 }

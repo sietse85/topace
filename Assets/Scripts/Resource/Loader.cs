@@ -9,7 +9,7 @@ namespace Resource
         public static Loader instance;
 
         public Dictionary<int, Weapon> weapons;
-        public Dictionary<int, Vehicle> vehicles;
+        public Dictionary<int, VehicleScriptable> vehicles;
         public Dictionary<int, Module> modules;
         public Dictionary<int, Projectile> projectiles;
 
@@ -26,11 +26,11 @@ namespace Resource
             }
 
             weapons = new Dictionary<int, Weapon>();
-            vehicles = new Dictionary<int, Vehicle>();
+            vehicles = new Dictionary<int, VehicleScriptable>();
             modules = new Dictionary<int, Module>();
             projectiles = new Dictionary<int, Projectile>();
             Weapon[] loadWeapons = Resources.LoadAll<Weapon>("");
-            Vehicle[] loadVehicles = Resources.LoadAll<Vehicle>("");
+            VehicleScriptable[] loadVehicles = Resources.LoadAll<VehicleScriptable>("");
             Debug.Log(loadVehicles.Length);
             Module[] loadModules = Resources.LoadAll<Module>("");
             Projectile[] loadProjectiles = Resources.LoadAll<Projectile>("");
@@ -40,7 +40,7 @@ namespace Resource
                 weapons.Add(w.itemId, w);
             }
 
-            foreach (Vehicle v in loadVehicles)
+            foreach (VehicleScriptable v in loadVehicles)
             {
                 vehicles.Add(v.itemId, v);
             }

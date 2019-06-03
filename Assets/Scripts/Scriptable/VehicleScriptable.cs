@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Scriptable
 {
     [CreateAssetMenu(menuName = "Objects/Vehicle")]
-    public class Vehicle : ScriptableObject
+    public class VehicleScriptable : ScriptableObject
     {
         public int itemId;
         public string name;

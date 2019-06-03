@@ -2,20 +2,16 @@ using Client;
 using Server;
 using UnityEngine;
 
-namespace VehicleFunctions
+namespace Vehicle
 {
     public class VehicleEntityRef : MonoBehaviour
     {
         public byte playerId;
-        public GameManager server;
-        public ClientGameManager client;
         public bool isServer;
 
         private void Awake()
         {
-            server = FindObjectOfType<GameManager>();
-            client = FindObjectOfType<ClientGameManager>();
-            if (server is GameManager)
+            if (GameManager.instance is GameManager)
             {
                 isServer = true;
             }
@@ -29,10 +25,10 @@ namespace VehicleFunctions
         {
             if (isServer)
             {
-                return server.vehicleEntities[playerId];
+                return GameManager.instance.vehicleEntities[playerId];
             }
             
-            return client.vehicleEntities[playerId];
+            return ClientGameManager.instance.vehicleEntities[playerId];
         }
     }
 }

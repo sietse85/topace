@@ -9,8 +9,6 @@ namespace Client
     public class NetworkTransformHandler : MonoBehaviour
     {
         // Start is called before the first frame update
-        private GameClient _gameClient;
-        private ClientGameManager _game;
         private Vector3 loc;
         private Quaternion rot;
         private NetworkTransformsForVehicle vnt;
@@ -20,20 +18,16 @@ namespace Client
         private byte playerIdBuf;
         private int tmpNetworkTransformId;
         private int tmpNetworkTransformPlayerId;
-        private ByteHelper b;
 
         private void Start()
         {
             float3Buf = new byte[12];
             float4Buf = new byte[16];
             transformIdBuf = new byte[4];
-            _gameClient = GetComponent<GameClient>();
-            _game = GetComponent<ClientGameManager>();
             loc = new Vector3();
             rot = new Quaternion();
             vnt = new NetworkTransformsForVehicle();
             vnt.HeaderByte = HeaderBytes.NetworkTransFormsForVehicle;
-            b = gameObject.AddComponent<ByteHelper>();
         }
 
         public void UpdateNetworkTransform(NetPacketReader r)
@@ -51,14 +45,14 @@ namespace Client
                 playerIdBuf = bytes[index];
                 index += sizeof(byte);
 
-                loc = b.ByteToVector3(float3Buf);
-                rot = b.ByteToQuaternion(float4Buf);
+                loc = ByteHelper.instance.ByteToVector3(float3Buf);
+                rot = ByteHelper.instance.ByteToQuaternion(float4Buf);
                 
-                tmpNetworkTransformId = b.ByteToInt(transformIdBuf);
+                tmpNetworkTransformId = ByteHelper.instance.ByteToInt(transformIdBuf);
                 tmpNetworkTransformPlayerId = playerIdBuf;
-                if (tmpNetworkTransformPlayerId != _game.playerId)
+                if (tmpNetworkTransformPlayerId != ClientGameManager.instance.playerId)
                 {
-                    _game.networkTransforms[tmpNetworkTransformId].transform.SetPositionAndRotation(loc, rot);
+                    ClientGameManager.instance.networkTransforms[tmpNetworkTransformId].transform.SetPositionAndRotation(loc, rot);
                 }
             }
         }
@@ -66,18 +60,18 @@ namespace Client
         public void SetTransformIds(NetPacketReader r)
         {
             vnt.Deserialize(r);
-            NetworkTransform[] transforms = _game.vehicleEntities[vnt.PlayerId].obj.GetComponentsInChildren<NetworkTransform>();
+            NetworkTransform[] transforms = ClientGameManager.instance.vehicleEntities[vnt.PlayerId].obj.GetComponentsInChildren<NetworkTransform>();
             int i = 0;
             foreach (NetworkTransform t in transforms)
             {
                 t.SetPlayerId(vnt.PlayerId);
                 t.SetTransformId(vnt.NetworkTransformIds[i]);
                 Debug.Log(vnt.NetworkTransformIds[i]);
-                _game.networkTransforms[vnt.NetworkTransformIds[i]].transform = t.networkTransform;
-                _game.networkTransforms[vnt.NetworkTransformIds[i]].slotOccupied = true;
-                _game.networkTransforms[vnt.NetworkTransformIds[i]].processInTick = true;
+                ClientGameManager.instance.networkTransforms[vnt.NetworkTransformIds[i]].transform = t.networkTransform;
+                ClientGameManager.instance.networkTransforms[vnt.NetworkTransformIds[i]].slotOccupied = true;
+                ClientGameManager.instance.networkTransforms[vnt.NetworkTransformIds[i]].processInTick = true;
                 i++;
-                if (_game.playerId == vnt.PlayerId)
+                if (ClientGameManager.instance.playerId == vnt.PlayerId)
                 {
                     t.InitUpdates();
                 }

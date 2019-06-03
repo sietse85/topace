@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using LiteNetLib;
 using Network;
 using Server;
@@ -9,32 +8,23 @@ namespace Client
 {
     public class ClientPlayerDataHandler : MonoBehaviour
     {
-        private GameClient _gameClient;
-        private ClientGameManager _game;
-
-        private ByteHelper b;
         private byte[] intBuf;
 
         private void Start()
         {
-            _gameClient = GetComponent<GameClient>();
-            _game = GetComponent<ClientGameManager>();
-            b = gameObject.AddComponent<ByteHelper>();
             intBuf = new byte[4];
         }
          
-        public void SendPlayerName()
+        public void SendPlayerName(string userName)
         {
-            SendUserNameToServer packet = new SendUserNameToServer("Sietse");
-            _gameClient.Send(packet); 
+            SendUserNameToServer packet = new SendUserNameToServer(userName);
+            GameClient.instance.Send(packet); 
         }
 
         public void SetPlayerId(NetPacketReader r)
         {
-            _game.playerId = r.GetByte();
-            Debug.Log("Client playerId = " + _game.playerId);
-            _game.securityPin = r.GetInt();
-            Debug.Log("Client securityPin = " + _game.securityPin);
+            ClientGameManager.instance.playerId = r.GetByte();
+            ClientGameManager.instance.securityPin = r.GetInt();
         }
 
         public void UpdatePlayerData(NetPacketReader r)
@@ -42,32 +32,32 @@ namespace Client
             byte[] buf = r.GetRemainingBytes();
             int index = 0;
             Buffer.BlockCopy(buf, index, intBuf, 0, sizeof(int));
-            int playerId = b.ByteToInt(intBuf);
+            int playerId = ByteHelper.instance.ByteToInt(intBuf);
             index += sizeof(int);
             Buffer.BlockCopy(buf, index, intBuf, 0, sizeof(int));
-            int latency = b.ByteToInt(intBuf);
+            int latency = ByteHelper.instance.ByteToInt(intBuf);
             index += sizeof(int);
             Buffer.BlockCopy(buf, index, intBuf, 0, sizeof(int));
-            int score = b.ByteToInt(intBuf);
+            int score = ByteHelper.instance.ByteToInt(intBuf);
             index += sizeof(int);
             Buffer.BlockCopy(buf, index, intBuf, 0, sizeof(int));
-            int kills = b.ByteToInt(intBuf);
+            int kills = ByteHelper.instance.ByteToInt(intBuf);
             index += sizeof(int);
             Buffer.BlockCopy(buf, index, intBuf, 0, sizeof(int));
-            int deaths = b.ByteToInt(intBuf);
+            int deaths = ByteHelper.instance.ByteToInt(intBuf);
             index += sizeof(int);
             Buffer.BlockCopy(buf, index, intBuf, 0, sizeof(int));
-            int shotsFired = b.ByteToInt(intBuf);
+            int shotsFired = ByteHelper.instance.ByteToInt(intBuf);
             index += sizeof(int);
             Buffer.BlockCopy(buf, index, intBuf, 0, sizeof(int));
-            int shotsHit = b.ByteToInt(intBuf);
+            int shotsHit = ByteHelper.instance.ByteToInt(intBuf);
 
-            _game.players[playerId].latency = latency;
-            _game.players[playerId].score = score;
-            _game.players[playerId].kills = kills;
-            _game.players[playerId].deaths = deaths;
-            _game.players[playerId].shotsFired = shotsFired;
-            _game.players[playerId].shotsHit = shotsHit;
+            ClientGameManager.instance.players[playerId].latency = latency;
+            ClientGameManager.instance.players[playerId].score = score;
+            ClientGameManager.instance.players[playerId].kills = kills;
+            ClientGameManager.instance.players[playerId].deaths = deaths;
+            ClientGameManager.instance.players[playerId].shotsFired = shotsFired;
+            ClientGameManager.instance.players[playerId].shotsHit = shotsHit;
         }
     }
 }

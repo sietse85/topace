@@ -15,7 +15,7 @@ namespace Menu
         public void LoadShipList()
         {
             button = Resources.Load("Button") as GameObject;
-            foreach (KeyValuePair<int, Scriptable.Vehicle> v in Loader.instance.vehicles)
+            foreach (KeyValuePair<int, Scriptable.VehicleScriptable> v in Loader.instance.vehicles)
             {
                 GameObject obj = Instantiate(button, content.gameObject.transform);
                 obj.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;

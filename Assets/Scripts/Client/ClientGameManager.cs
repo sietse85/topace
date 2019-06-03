@@ -1,17 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using LiteNetLib;
 using Menu;
 using UnityEngine;
 using Network;
 using Server;
-using VehicleFunctions;
+using Vehicle;
 
 namespace Client
 {
     public class ClientGameManager : MonoBehaviour
     {
-        public GameClient client;
+    
+        public static ClientGameManager instance;
         public NetworkTransformStruct[] networkTransforms;
         public VehicleEntity[] vehicleEntities;
         public Player[] players;
@@ -27,11 +27,19 @@ namespace Client
         public NetworkTransformHandler networkTransformHandler;
         public VehicleController vehicleController;
         public int securityPin;
-        public uint bulletId;
+        public uint uniqueProjectileId;
 
         private void Awake()
         {
-            Debug.Log("A client manager awoke");
+            if (instance == null)
+            {
+                instance = this;
+                Debug.Log("A client manager awoke");
+            }
+            else
+            {
+                Destroy(this);
+            }
         }
 
         private void Start()
@@ -39,7 +47,6 @@ namespace Client
             networkTransforms = new NetworkTransformStruct[1024];
             vehicleEntities = new VehicleEntity[254];
             projectiles = new ProjectileReference[254 * 100];
-            client = GetComponent<GameClient>();
             playerDataHandler = gameObject.GetComponent<ClientPlayerDataHandler>();
             vehicleDataHandler = gameObject.GetComponent<ClientVehicleDataHandler>();
             networkTransformHandler = gameObject.GetComponent<NetworkTransformHandler>();
@@ -55,7 +62,7 @@ namespace Client
             switch (header)
             {
                 case HeaderBytes.AskClientForUsername:
-                    playerDataHandler.SendPlayerName();
+                    playerDataHandler.SendPlayerName("Unknown");
                     break;
                 case HeaderBytes.SendPlayerId:
                     playerDataHandler.SetPlayerId(r);

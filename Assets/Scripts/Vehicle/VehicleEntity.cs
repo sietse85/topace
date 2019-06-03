@@ -1,7 +1,6 @@
 using UnityEngine;
-using System;
 
-namespace VehicleFunctions
+namespace Vehicle
 {
     public struct VehicleEntity
     {

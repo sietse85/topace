@@ -10,26 +10,22 @@ namespace Network
         public Transform networkTransform;
         [SerializeField] private int ownedByPlayerId;
         [SerializeField] public int networkTransformId;
-        private GameClient _client;
         public NetworkTransformUpdate u;
-        private ClientGameManager _game;
 
         private void Awake()
         {
             ownedByPlayerId = -1;
             networkTransformId = -1;
-            _client = FindObjectOfType<GameClient>();
             u = new NetworkTransformUpdate();
             u.HeaderByte = HeaderBytes.NetworkTransFormId;
-            _game = FindObjectOfType<ClientGameManager>();
             networkTransform = gameObject.transform;
         }
 
         public void InitUpdates()
         {
-            if (_client != null)
+            if (GameClient.instance != null)
             {
-                if (ownedByPlayerId != _game.playerId)
+                if (ownedByPlayerId != ClientGameManager.instance.playerId)
                     enabled = false;
                 StartCoroutine(SendUpdateToServer());
             }
@@ -53,10 +49,10 @@ namespace Network
                 u.RotZ = networkTransform.rotation.z;
                 u.RotW = networkTransform.rotation.w;
                 u.NetworkTransformId = networkTransformId;
-                u.PlayerId = _game.playerId;
-                u.PlayerPin = _game.securityPin;
-                _client.Send(u);
-                yield return new WaitForSeconds(_client.updateSpeedNetworktransforms);
+                u.PlayerId = ClientGameManager.instance.playerId;
+                u.PlayerPin = ClientGameManager.instance.securityPin;
+                GameClient.instance.Send(u);
+                yield return new WaitForSeconds(GameClient.instance.updateSpeedNetworktransforms);
             }
         }
 

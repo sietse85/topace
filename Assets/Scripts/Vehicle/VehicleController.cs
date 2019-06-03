@@ -3,7 +3,7 @@ using Resource;
 using Scriptable;
 using UnityEngine;
 
-namespace VehicleFunctions
+namespace Vehicle
 {
     public class VehicleController : MonoBehaviour
     {
@@ -21,19 +21,13 @@ namespace VehicleFunctions
         private float _acceleration;
         public bool vehicleControl;
         public bool vehicleInitialized;
-        public ClientGameManager game;
         private FoiledWings[] _wings;
         private TurretSlot[] turrets;
-
-        private void Start()
-        {
-            game = GetComponent<ClientGameManager>();
-        }
 
         // Start is called before the first frame update
         void InitVehicle(int vehicleDatabaseId, GameObject vehicle)
         {
-            Vehicle V = Loader.instance.vehicles[vehicleDatabaseId];
+            VehicleScriptable V = Loader.instance.vehicles[vehicleDatabaseId];
             vehicleControlled = vehicle;
             maxSpeed = V.maximumSpeed;
             speedYaw = V.yawSpeed;
@@ -124,7 +118,7 @@ namespace VehicleFunctions
 
             vehicleControl = true;
             _vTransform = vehicleControlled.transform;
-            game.ShowVehicleUI();
+            ClientGameManager.instance.ShowVehicleUI();
         }
     }
 }

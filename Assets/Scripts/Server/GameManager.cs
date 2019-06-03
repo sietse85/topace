@@ -1,43 +1,46 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using LiteNetLib;
 using UnityEngine;
 using Network;
-using VehicleFunctions;
+using Vehicle;
 
 namespace Server
 {
     public class GameManager : MonoBehaviour
     {
+        public static GameManager instance;
+        
         public Player[] players;
         public VehicleEntity[] vehicleEntities;
         public ProjectileReference[] projectiles; 
         public Dictionary<int, string> playerNames;
         public Dictionary<int, TurretSlot[]> turrets;
-        public GameServer gameServer;
         public PlayerDataHandler playerDataHandler;
         public VehicleDataHandler vehicleDataHandler;
         public VehicleConstructor vc;
         public Ticker ticker;
         public int networkTransformId;
 
-        // Start is called before the first frame update
-        void Awake()
+        void Start()
         {
-            gameServer = GetComponent<GameServer>();
-            turrets = new Dictionary<int, TurretSlot[]>(gameServer.maxPlayers);
-            players = new Player[gameServer.maxPlayers];
-            playerNames = new Dictionary<int, string>(gameServer.maxPlayers);
-            projectiles = new ProjectileReference[gameServer.maxPlayers * 100];
-            vehicleEntities = new VehicleEntity[gameServer.maxPlayers];
+            if (instance == null)
+            {
+                instance = this;
+            }
+            else
+            {
+                Destroy(this);
+            }
+            
+            turrets = new Dictionary<int, TurretSlot[]>(GameServer.instance.maxPlayers);
+            players = new Player[GameServer.instance.maxPlayers];
+            playerNames = new Dictionary<int, string>(GameServer.instance.maxPlayers);
+            projectiles = new ProjectileReference[GameServer.instance.maxPlayers * 100];
+            vehicleEntities = new VehicleEntity[GameServer.instance.maxPlayers];
             playerDataHandler = gameObject.GetComponent<PlayerDataHandler>();
             vehicleDataHandler = gameObject.GetComponent<VehicleDataHandler>();
             vc = gameObject.GetComponent<VehicleConstructor>();
             ticker = gameObject.GetComponent<Ticker>();
-            if (ticker == null)
-            {
-                Debug.Log("Network transform handler could not be loaded");
-            }
         }
 
 
@@ -45,12 +48,6 @@ namespace Server
         public void HandleReceived(NetPeer peer, NetPacketReader r)
         {
             byte header = r.GetByte();
-
-            if (header != HeaderBytes.NetworkTransFormId)
-            {
-                Debug.Log("header " + header);
-            }
-
             switch (header)
             {
                 case HeaderBytes.SendUserNameToServer:

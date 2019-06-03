@@ -5,6 +5,8 @@ namespace Server
 {
     public class ByteHelper : MonoBehaviour
     {
+        public static ByteHelper instance;
+        
         private byte[] float3Buf;
         private byte[] float4Buf;
         private byte[] intBuf;
@@ -12,6 +14,18 @@ namespace Server
         private Vector3 tmpVector3;
         private Quaternion tmpQuaternion;
         private int tmpInt;
+
+        private void Awake()
+        {
+            if (instance == null)
+            {
+                instance = this;
+            }
+            else
+            {
+                Destroy(this);
+            }
+        }
 
         private void Start()
         {

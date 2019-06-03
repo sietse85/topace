@@ -1,31 +1,27 @@
 ﻿using Client;
 using LiteNetLib;
 using Resource;
+using Scriptable;
 using UnityEngine;
 using Server;
-using Scriptable;
-using VehicleFunctions;
+using Vehicle;
 
 namespace Network
 {
     public class VehicleConstructor : MonoBehaviour
     {
-        private GameManager _serverGame;
-        private ClientGameManager _clientGame;
         private NetworkTransformsForVehicle vnt;
         private Ticker ticker;
         private bool isServer;
 
         private void Start()
         {
-            _serverGame = FindObjectOfType<GameManager>();
-            _clientGame = FindObjectOfType<ClientGameManager>();
 
             isServer = false;
 
-            if (_serverGame is GameManager)
+            if (GameManager.instance is GameManager)
             {
-                if (_clientGame == null)
+                if (ClientGameManager.instance == null)
                     isServer = true;
             }
             
@@ -38,7 +34,7 @@ namespace Network
 
         public void SpawnExistingVehiclesOnClient(NetPeer peer, int playerId)
         {
-            foreach (VehicleEntity v in _serverGame.vehicleEntities)
+            foreach (VehicleEntity v in GameManager.instance.vehicleEntities)
             {
                 if (v.playerId == playerId)
                     continue;
@@ -46,10 +42,10 @@ namespace Network
                 if(!v.processInTick)
                     continue;
                 
-                Vector3 pos = _serverGame.vehicleEntities[v.playerId].obj.transform.position;
-                Quaternion rot = _serverGame.vehicleEntities[v.playerId].obj.transform.rotation; 
+                Vector3 pos = GameManager.instance.vehicleEntities[v.playerId].obj.transform.position;
+                Quaternion rot = GameManager.instance.vehicleEntities[v.playerId].obj.transform.rotation; 
                 ConstructVehicleSpawnPacket(v.playerId, v.vehicleDatabaseId, pos, rot, v.config, peer);
-                NetworkTransform[] childs = _serverGame.vehicleEntities[v.playerId].obj.GetComponentsInChildren<NetworkTransform>();
+                NetworkTransform[] childs = GameManager.instance.vehicleEntities[v.playerId].obj.GetComponentsInChildren<NetworkTransform>();
                 int[] ntIds = new int[childs.Length];
                 int i = 0;
                 foreach (NetworkTransform t in childs)
@@ -59,7 +55,7 @@ namespace Network
                 }
                 vnt.PlayerId = v.playerId;
                 vnt.NetworkTransformIds = ntIds;
-                _serverGame.gameServer.Send(vnt, peer);
+                GameServer.instance.Send(vnt, peer);
             }
         }
 
@@ -77,7 +73,7 @@ namespace Network
         public void ConstructVehicle(byte playerId, int vehicleDatabaseId, Vector3 pos, Quaternion rot,
             byte[] config)
         {
-            Vehicle v = Loader.instance.vehicles[vehicleDatabaseId];
+            VehicleScriptable v = Loader.instance.vehicles[vehicleDatabaseId];
             GameObject obj = Instantiate(v.prefab, pos, rot);
 
             if (isServer)
@@ -101,7 +97,7 @@ namespace Network
 
             if (isServer)
             {
-                _serverGame.turrets[playerId] = turretSlots;
+                GameManager.instance.turrets[playerId] = turretSlots;
                 int[] ntIds = AssignNewNetworkTransforms(ref childs, playerId, pos, rot);
                 ConstructVehicleSpawnPacket(playerId, vehicleDatabaseId, pos, rot, config, null);
                 AddToEntityList(playerId, v, vehicleDatabaseId, config);
@@ -113,20 +109,20 @@ namespace Network
                 {
                     Debug.Log("Sending id " + i);
                 }
-                _serverGame.gameServer.SendToAll(vnt);
+                GameServer.instance.SendToAll(vnt);
             }
 
             if (!isServer)
             {
-                if (_clientGame.playerId != playerId)
+                if (ClientGameManager.instance.playerId != playerId)
                 {
                     obj.GetComponent<Rigidbody>().isKinematic = true;
                 }
 
                 //if the vehicle is spawned for this player
-                if (playerId == _clientGame.playerId)
+                if (playerId == ClientGameManager.instance.playerId)
                 {
-                    _clientGame.vehicleController.GiveControlToPlayer(obj, vehicleDatabaseId);
+                    ClientGameManager.instance.vehicleController.GiveControlToPlayer(obj, vehicleDatabaseId);
                 }
             }
             
@@ -136,14 +132,14 @@ namespace Network
             //finaly set vehicle refs
             if (isServer)
             {
-                _serverGame.vehicleEntities[playerId].obj = obj;
-                _serverGame.vehicleEntities[playerId].playerId = playerId;
+                GameManager.instance.vehicleEntities[playerId].obj = obj;
+                GameManager.instance.vehicleEntities[playerId].playerId = playerId;
             }
             else
             {
-                _clientGame.vehicleEntities[playerId].obj = obj;
-                _clientGame.vehicleEntities[playerId].playerId = playerId;
-                _clientGame.vehicleEntities[playerId].processInTick = true;
+                ClientGameManager.instance.vehicleEntities[playerId].obj = obj;
+                ClientGameManager.instance.vehicleEntities[playerId].playerId = playerId;
+                ClientGameManager.instance.vehicleEntities[playerId].processInTick = true;
             }
         }
 
@@ -157,31 +153,31 @@ namespace Network
 
             if (peer == null)
             {
-                _serverGame.gameServer.SendToAll(s);
+                GameServer.instance.SendToAll(s);
             }
             else
             {
-                _serverGame.gameServer.Send(s, peer);
+                GameServer.instance.Send(s, peer);
             }
         }
 
-        public void AddToEntityList(byte playerId, Vehicle v, int vehicleDatabaseId, byte[] config)
+        public void AddToEntityList(byte playerId, VehicleScriptable v, int vehicleDatabaseId, byte[] config)
         {
-            _serverGame.vehicleEntities[playerId].playerId = playerId;
-            _serverGame.vehicleEntities[playerId].vehicleDatabaseId = vehicleDatabaseId;
-            _serverGame.vehicleEntities[playerId].currentHealth = v.baseHealth;
-            _serverGame.vehicleEntities[playerId].currentArmor = v.baseArmor;
-            _serverGame.vehicleEntities[playerId].currentShield = v.baseShield;
-            _serverGame.vehicleEntities[playerId].shieldRechargeRate = v.shieldRechargePerSec;
-            _serverGame.vehicleEntities[playerId].battery = v.batteryCapacity;
-            _serverGame.vehicleEntities[playerId].batteryRechargeRate = v.rechargePerSec;
-            _serverGame.vehicleEntities[playerId].moduleSlots = v.moduleSlots;
-            _serverGame.vehicleEntities[playerId].weaponSlots = v.weaponSlots;
-            _serverGame.vehicleEntities[playerId].ApplyConfigurationOfVehicle(config);
-            _serverGame.vehicleEntities[playerId].processInTick = true;
+            GameManager.instance.vehicleEntities[playerId].playerId = playerId;
+            GameManager.instance.vehicleEntities[playerId].vehicleDatabaseId = vehicleDatabaseId;
+            GameManager.instance.vehicleEntities[playerId].currentHealth = v.baseHealth;
+            GameManager.instance.vehicleEntities[playerId].currentArmor = v.baseArmor;
+            GameManager.instance.vehicleEntities[playerId].currentShield = v.baseShield;
+            GameManager.instance.vehicleEntities[playerId].shieldRechargeRate = v.shieldRechargePerSec;
+            GameManager.instance.vehicleEntities[playerId].battery = v.batteryCapacity;
+            GameManager.instance.vehicleEntities[playerId].batteryRechargeRate = v.rechargePerSec;
+            GameManager.instance.vehicleEntities[playerId].moduleSlots = v.moduleSlots;
+            GameManager.instance.vehicleEntities[playerId].weaponSlots = v.weaponSlots;
+            GameManager.instance.vehicleEntities[playerId].ApplyConfigurationOfVehicle(config);
+            GameManager.instance.vehicleEntities[playerId].processInTick = true;
         }
 
-        public void CreateWeaponsOnVehicle(GameObject obj, byte[] config, Vehicle v) 
+        public void CreateWeaponsOnVehicle(GameObject obj, byte[] config, VehicleScriptable v) 
         {
             TurretSlot[] slots = obj.GetComponentsInChildren<TurretSlot>();
             for (int i = 0; i < v.weaponSlots; i++)
@@ -215,11 +211,11 @@ namespace Network
                 int newNetworkTransformId = GetNextFreeNetworkTransformSlot();
                 t.SetTransformId(newNetworkTransformId);
                 t.SetPlayerId(playerId);
-                _serverGame.ticker.networkTransforms[newNetworkTransformId].playerId = playerId;
-                _serverGame.ticker.networkTransforms[newNetworkTransformId].processInTick = true;
-                _serverGame.ticker.networkTransforms[newNetworkTransformId].transform = t.transform;
-                _serverGame.ticker.networkTransforms[newNetworkTransformId].transform.position = position;
-                _serverGame.ticker.networkTransforms[newNetworkTransformId].transform.rotation = rotation;
+                GameManager.instance.ticker.networkTransforms[newNetworkTransformId].playerId = playerId;
+                GameManager.instance.ticker.networkTransforms[newNetworkTransformId].processInTick = true;
+                GameManager.instance.ticker.networkTransforms[newNetworkTransformId].transform = t.transform;
+                GameManager.instance.ticker.networkTransforms[newNetworkTransformId].transform.position = position;
+                GameManager.instance.ticker.networkTransforms[newNetworkTransformId].transform.rotation = rotation;
                 ntIds[i] = newNetworkTransformId;
                 i++;
             }

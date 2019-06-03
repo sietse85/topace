@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using VehicleFunctions;
+using Vehicle;
 
 public class ProjectileEntity : MonoBehaviour
 {
@@ -8,7 +8,8 @@ public class ProjectileEntity : MonoBehaviour
     public float velocity;
     public bool doRayCast;
     private RaycastHit hit;
-    public int projectileId;
+    public int projectileDataBaseId;
+    public int uniqueProjectileId;
    
     // Update is called once per frame
     void Update()
@@ -22,12 +23,11 @@ public class ProjectileEntity : MonoBehaviour
 
         if (doRayCast)
         {
-            if (Physics.Raycast(transform.position, transform.forward, out hit))
+            if (Physics.Raycast(transform.position, transform.forward, out hit, 0.1f))
             {
                 if (hit.collider.gameObject.layer == 8)
                 {
                     GameObject obj = hit.collider.gameObject;
-                    Debug.Log(obj);
                     VehicleEntityRef v = obj.GetComponentInParent<VehicleEntityRef>();
                     byte playerId = v.GetReference().playerId;
                     Debug.Log("A projectile collied with player " + playerId);

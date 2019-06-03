@@ -296,47 +296,33 @@ namespace Network
         }
     }
     
-    //server to client
-    public struct VehicleEntityData : INetSerializable
-    {
-        public void Serialize(NetDataWriter writer)
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void Deserialize(NetDataReader reader)
-        {
-            throw new System.NotImplementedException();
-        }
-    }
-    
     //client to server
     public struct FireWeapon : INetSerializable
     {
         public byte headerByte;
         public byte playerId;
         public int playerPin;
-        public int projectileId;
+        public int projectileDatabaseId;
         public byte weaponSlotFired;
-        public uint bulletId;
+        public uint uniqueProjectileId;
         
         public void Serialize(NetDataWriter writer)
         {
             writer.Put(headerByte);
             writer.Put(playerId);
             writer.Put(playerPin);
-            writer.Put(projectileId);
+            writer.Put(projectileDatabaseId);
             writer.Put(weaponSlotFired);
-            writer.Put(bulletId);
+            writer.Put(uniqueProjectileId);
         }
 
         public void Deserialize(NetDataReader reader)
         {
             playerId = reader.GetByte();
             playerPin = reader.GetInt();
-            projectileId = reader.GetInt();
+            projectileDatabaseId = reader.GetInt();
             weaponSlotFired = reader.GetByte();
-            bulletId = reader.GetUInt();
+            uniqueProjectileId = reader.GetUInt();
         }
     }
 }

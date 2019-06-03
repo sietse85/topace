@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using LiteNetLib;
 using LiteNetLib.Utils;
@@ -8,16 +9,28 @@ namespace Client
 {
     public class GameClient : MonoBehaviour, INetEventListener
     {
+        public static GameClient instance;
+        
         private NetManager _client;
-        private ClientGameManager _game;
         private NetDataWriter _writer;
         private NetPeer _server;
         public float updateSpeedNetworktransforms = 0.1f;
 
+        private void Awake()
+        {
+            if (instance == null)
+            {
+                instance = this;
+            }
+            else
+            {
+                Destroy(instance);
+            }
+        }
+
         // Start is called before the first frame update
         void Start()
         {
-            _game = GetComponent<ClientGameManager>();
             _writer = new NetDataWriter();
             _client = new NetManager(this);
             _client.UnconnectedMessagesEnabled = true;
@@ -53,7 +66,7 @@ namespace Client
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
-            _game.HandleReceived(reader);
+            ClientGameManager.instance.HandleReceived(reader);
         }
 
         public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader,
@@ -62,7 +75,7 @@ namespace Client
             if (messageType == UnconnectedMessageType.BasicMessage && _client.PeersCount == 0 && reader.GetInt() == 1)
             {
                 Debug.Log("[CLIENT] Received discovery response. Connecting to: " + remoteEndPoint);
-                _client.Connect(remoteEndPoint, "sample_app");
+                _client.Connect(remoteEndPoint, "topace");
             }
         }
 

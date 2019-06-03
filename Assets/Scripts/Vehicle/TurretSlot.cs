@@ -6,105 +6,105 @@ using UnityEngine;
 using Client;
 using Server;
 
-public class TurretSlot : MonoBehaviour
+namespace Vehicle
 {
-    public float cooldown;
-    public bool inCoolDown;
-    public int weaponDataBaseId;
-    public int projectileId;
-    public byte turretSlotNumber;
-    public FireWeapon firePacket;
-    public ClientGameManager client;
-    private GameManager game;
-    private bool isServer;
-    private float latencyCompensation;
-    public int controllerByPlayerId;
-
-    private void Awake()
+    public class TurretSlot : MonoBehaviour
     {
-        firePacket = new FireWeapon();
-        firePacket.headerByte = HeaderBytes.FireWeapon;
-        client = FindObjectOfType<ClientGameManager>();
-    }
-    
-    public void InitTurret(Weapon w)
-    {
-        Instantiate(w.prefab, transform);
-        cooldown = w.cooldownSec;
-        weaponDataBaseId = w.itemId;
-        projectileId = Loader.instance.weapons[w.itemId].projectile.itemId;
+        public float cooldown;
+        public bool inCoolDown;
+        public int weaponDataBaseId;
+        public int projectileDatabaseId;
+        public byte turretSlotNumber;
+        public FireWeapon firePacket;
+        private bool isServer;
+        private float latencyCompensation;
+        public int controllerByPlayerId;
 
-        if (client is ClientGameManager)
+        private void Awake()
         {
-            firePacket.playerPin = client.securityPin;
-            firePacket.playerId = client.playerId;
-            firePacket.projectileId = projectileId;
-            isServer = false;
+            firePacket = new FireWeapon();
+            firePacket.headerByte = HeaderBytes.FireWeapon;
         }
-        else
+
+        public void InitTurret(Weapon w)
         {
-            game = FindObjectOfType<GameManager>();
-            isServer = true;
-        }
-    }
+            Instantiate(w.prefab, transform);
+            cooldown = w.cooldownSec;
+            weaponDataBaseId = w.itemId;
+            projectileDatabaseId = Loader.instance.weapons[w.itemId].projectile.itemId;
 
-    public void Fire()
-    {
-        //able to fire
-        if (!inCoolDown)
-        {
-            
-            if (!isServer)
+            if (ClientGameManager.instance is ClientGameManager)
             {
-                client.bulletId++;
-                if (client.bulletId == 100)
-                {
-                    client.bulletId = 0;
-                }
-                firePacket.bulletId = client.bulletId;
-                firePacket.weaponSlotFired = turretSlotNumber;
-                client.client.Send(firePacket);
-            }
-
-            inCoolDown = true;
-            GameObject obj = Instantiate(
-                Loader.instance.weapons[weaponDataBaseId].projectile.prefab,
-                transform.position,
-                transform.rotation
-            );
-
-            if (isServer)
-            {
-                game.projectiles[firePacket.playerId * 100 + firePacket.bulletId].obj = obj;
+                firePacket.playerPin = ClientGameManager.instance.securityPin;
+                firePacket.playerId = ClientGameManager.instance.playerId;
+                firePacket.projectileDatabaseId = projectileDatabaseId;
+                isServer = false;
             }
             else
             {
-                client.projectiles[firePacket.playerId * 100 + firePacket.bulletId].obj = obj;
+                isServer = true;
             }
-
-            ProjectileEntity p = obj.GetComponent<ProjectileEntity>();
-            p.timeToLive = Loader.instance.weapons[weaponDataBaseId].projectile.timeToLive;
-            p.velocity = Loader.instance.weapons[weaponDataBaseId].projectile.projectileSpeed;
-            p.projectileId = projectileId;
-            if (!isServer)
-            {
-                p.doRayCast = true;
-
-            }
-            
-            StartCoroutine(InitiateCoolDown());
         }
-    }
 
-    public IEnumerator InitiateCoolDown()
-    {
-        if (isServer)
+        public void Fire()
         {
-            inCoolDown = false;
-            yield break;
+            //able to fire
+            if (!inCoolDown)
+            {
+
+                if (!isServer)
+                {
+                    ClientGameManager.instance.uniqueProjectileId++;
+                    if (ClientGameManager.instance.uniqueProjectileId == 100)
+                    {
+                        ClientGameManager.instance.uniqueProjectileId = 0;
+                    }
+
+                    firePacket.uniqueProjectileId = ClientGameManager.instance.uniqueProjectileId;
+                    firePacket.weaponSlotFired = turretSlotNumber;
+                    GameClient.instance.Send(firePacket);
+                }
+
+                inCoolDown = true;
+                GameObject obj = Instantiate(
+                    Loader.instance.weapons[weaponDataBaseId].projectile.prefab,
+                    transform.position,
+                    transform.rotation
+                );
+
+                if (isServer)
+                {
+                    GameManager.instance.projectiles[firePacket.playerId * 100 + firePacket.uniqueProjectileId].obj = obj;
+                }
+                else
+                {
+                    ClientGameManager.instance.projectiles[firePacket.playerId * 100 + firePacket.uniqueProjectileId].obj = obj;
+                }
+
+                ProjectileEntity p = obj.GetComponent<ProjectileEntity>();
+                p.timeToLive = Loader.instance.weapons[weaponDataBaseId].projectile.timeToLive;
+                p.velocity = Loader.instance.weapons[weaponDataBaseId].projectile.projectileSpeed;
+                p.projectileDataBaseId = projectileDatabaseId;
+                if (!isServer)
+                {
+                    p.doRayCast = true;
+
+                }
+
+                StartCoroutine(InitiateCoolDown());
+            }
         }
 
-        yield return new WaitForSeconds(cooldown);
-        inCoolDown = false;
+        public IEnumerator InitiateCoolDown()
+        {
+            if (isServer)
+            {
+                inCoolDown = false;
+                yield break;
+            }
+
+            yield return new WaitForSeconds(cooldown);
+            inCoolDown = false;
+        }
     }
 }

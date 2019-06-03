@@ -8,9 +8,10 @@ namespace Server
 {
     public class GameServer : MonoBehaviour, INetEventListener, INetLogger
     {
+        public static GameServer instance;
+        
         private NetDataWriter _writer;
         private NetManager _server;
-        private GameManager _game;
         public int maxPlayers = 64;
         public int port = 5000;
         public string ip = "127.0.0.1";
@@ -21,8 +22,16 @@ namespace Server
 
         private void Awake()
         {
+            if (instance == null)
+            {
+                instance = this;
+            }
+            else
+            {
+                Destroy(this);
+            }
+            
             maxPlayers = 64;
-            _game = GetComponent<GameManager>();
             NetDebug.Logger = this;
             _writer = new NetDataWriter();
             _server = new NetManager(this);
@@ -56,37 +65,37 @@ namespace Server
         {
             _writer.Reset();
             packet.Serialize(_writer);
-            for (int i = 0; i < _game.players.Length; i++) {
-                if (_game.players[i].slotOccupied)
+            for (int i = 0; i < GameManager.instance.players.Length; i++) {
+                if (GameManager.instance.players[i].slotOccupied)
                 {
-                    _game.players[i].peer.Send(_writer, DeliveryMethod.ReliableUnordered);
+                    GameManager.instance.players[i].peer.Send(_writer, DeliveryMethod.ReliableUnordered);
                 }
             }
         }
         
         public void SendBytesToAll(byte[] buf, int length)
         {
-            if (_game == null)
+            if (GameManager.instance == null)
             {
                 return;
             }
 
-            for (int i = 0; i < _game.players.Length; i++) {
-                if (_game.players[i].slotOccupied)
+            for (int i = 0; i < GameManager.instance.players.Length; i++) {
+                if (GameManager.instance.players[i].slotOccupied)
                 {
-                    _game.players[i].peer.Send(buf, 0, length, DeliveryMethod.ReliableUnordered);
+                    GameManager.instance.players[i].peer.Send(buf, 0, length, DeliveryMethod.ReliableUnordered);
                 }
             }
         }
 
         public void OnPeerConnected(NetPeer peer)
         {
-            _game.playerDataHandler.HandleNewConnection(peer);
+            GameManager.instance.playerDataHandler.HandleNewConnection(peer);
         }
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            _game.playerDataHandler.RemovePlayer(peer);
+            GameManager.instance.playerDataHandler.RemovePlayer(peer);
         }
 
         public void OnNetworkError(IPEndPoint endPoint, SocketError socketError)
@@ -96,7 +105,7 @@ namespace Server
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
-            _game.HandleReceived(peer, reader);
+            GameManager.instance.HandleReceived(peer, reader);
         }
 
         public void OnNetworkReceiveUnconnected(IPEndPoint remoteEndPoint, NetPacketReader reader,
@@ -106,7 +115,7 @@ namespace Server
 
         public void OnNetworkLatencyUpdate(NetPeer peer, int latency)
         {
-            _game.playerDataHandler.UpdateLatencyOfPlayer(peer, latency);
+            GameManager.instance.playerDataHandler.UpdateLatencyOfPlayer(peer, latency);
             
         }
 

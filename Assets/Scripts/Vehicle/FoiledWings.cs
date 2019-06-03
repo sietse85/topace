@@ -1,21 +1,17 @@
 ﻿using Client;
 using UnityEngine;
 
-namespace VehicleFunctions
+namespace Vehicle
 {
     public class FoiledWings : MonoBehaviour
     {
         public float idleAngle;
         public float unfoilAngle;
         private Vector3 v;
-        private ClientGameManager _client;
-
-        private bool foiled = false;
+        private bool foiled;
 
         public void Start()
         {
-            _client = FindObjectOfType<ClientGameManager>();
-
             if (FindObjectOfType<Server.GameServer>() != null)
                 enabled = false;
 
