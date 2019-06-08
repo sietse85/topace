@@ -9,16 +9,9 @@ namespace Vehicle
         public byte playerId;
         public bool isServer;
 
-        private void Awake()
+        public void IsServer(bool itIs)
         {
-            if (GameManager.instance is GameManager)
-            {
-                isServer = true;
-            }
-            else
-            {
-                isServer = false;
-            }
+            isServer = itIs;
         }
 
         public VehicleEntity GetReference()

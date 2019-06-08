@@ -6,7 +6,7 @@ namespace Network
     //client to server
     public struct RequestSpawn : INetSerializable
     {
-        public byte HeaderByte;
+        public readonly byte HeaderByte;
         public byte PlayerId;
         public int PlayerPin;
         public int VehicleDatabaseId;
@@ -15,10 +15,10 @@ namespace Network
         public RequestSpawn(byte playerId, int playerPin, int vehicleDatabaseId, byte[] config)
         {
             HeaderByte = HeaderBytes.RequestSpawn;
-            this.PlayerId = playerId;
-            this.PlayerPin = playerPin;
-            this.VehicleDatabaseId = vehicleDatabaseId;
-            this.Config = config;
+            PlayerId = playerId;
+            PlayerPin = playerPin;
+            VehicleDatabaseId = vehicleDatabaseId;
+            Config = config;
         }
         
         public void Serialize(NetDataWriter writer)
@@ -59,16 +59,16 @@ namespace Network
             float rotY, float rotZ, float rotW, byte[] config)
         {
             HeaderByte = HeaderBytes.SpawnVehicle;
-            this.PlayerId = playerId;
-            this.VehicleDatabaseId = vehicleDatabaseId;
-            this.PosX = posX;
-            this.PosY = posY;
-            this.PosZ = posZ;
-            this.RotX = rotX;
-            this.RotY = rotY;
-            this.RotZ = rotZ;
-            this.RotW = rotW;
-            this.Config = config;
+            PlayerId = playerId;
+            VehicleDatabaseId = vehicleDatabaseId;
+            PosX = posX;
+            PosY = posY;
+            PosZ = posZ;
+            RotX = rotX;
+            RotY = rotY;
+            RotZ = rotZ;
+            RotW = rotW;
+            Config = config;
         }
 
         public void Serialize(NetDataWriter writer)
@@ -111,7 +111,7 @@ namespace Network
     //server to client
     public struct AskClientForUsername : INetSerializable
     {
-        public byte HeaderByte;
+        public readonly byte HeaderByte;
 
         public AskClientForUsername(byte header)
         {
@@ -132,7 +132,7 @@ namespace Network
     //client to server
     public struct SendUserNameToServer : INetSerializable
     {
-        public byte HeaderByte;
+        public readonly byte HeaderByte;
         public string PlayerName;
 
         public SendUserNameToServer(string name)
@@ -275,54 +275,107 @@ namespace Network
     //server to client
     public struct RemoveVehicle : INetSerializable
     {
-        public byte headerByte;
-        public byte playerId;
+        public byte HeaderByte;
+        public byte PlayerId;
 
         public RemoveVehicle(byte playerId)
         {
-            headerByte = HeaderBytes.RemoveVehicle;
-            this.playerId = playerId;
+            HeaderByte = HeaderBytes.RemoveVehicle;
+            PlayerId = playerId;
         }
         
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(headerByte);
-            writer.Put(playerId);
+            writer.Put(HeaderByte);
+            writer.Put(PlayerId);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            playerId = reader.GetByte();
+            PlayerId = reader.GetByte();
         }
     }
     
     //client to server
     public struct FireWeapon : INetSerializable
     {
-        public byte headerByte;
-        public byte playerId;
-        public int playerPin;
-        public int projectileDatabaseId;
-        public byte weaponSlotFired;
-        public uint uniqueProjectileId;
+        public byte HeaderByte;
+        public byte PlayerId;
+        public int PlayerPin;
+        public int ProjectileDatabaseId;
+        public byte WeaponSlotFired;
+        public byte UniqueProjectileId;
+        public float RotX;
+        public float RotY;
+        public float RotZ;
+        public float RotW;
         
         public void Serialize(NetDataWriter writer)
         {
-            writer.Put(headerByte);
-            writer.Put(playerId);
-            writer.Put(playerPin);
-            writer.Put(projectileDatabaseId);
-            writer.Put(weaponSlotFired);
-            writer.Put(uniqueProjectileId);
+            writer.Put(HeaderByte);
+            writer.Put(PlayerId);
+            writer.Put(PlayerPin);
+            writer.Put(ProjectileDatabaseId);
+            writer.Put(WeaponSlotFired);
+            writer.Put(UniqueProjectileId);
+            writer.Put(RotX);
+            writer.Put(RotY);
+            writer.Put(RotZ);
+            writer.Put(RotW);
         }
 
         public void Deserialize(NetDataReader reader)
         {
-            playerId = reader.GetByte();
-            playerPin = reader.GetInt();
-            projectileDatabaseId = reader.GetInt();
-            weaponSlotFired = reader.GetByte();
-            uniqueProjectileId = reader.GetUInt();
+            PlayerId = reader.GetByte();
+            PlayerPin = reader.GetInt();
+            ProjectileDatabaseId = reader.GetInt();
+            WeaponSlotFired = reader.GetByte();
+            UniqueProjectileId = reader.GetByte();
+            RotX = reader.GetFloat();
+            RotY = reader.GetFloat();
+            RotZ = reader.GetFloat();
+            RotW = reader.GetFloat();
+        }
+    }
+    
+    public struct ReportCollision : INetSerializable
+    {
+        public byte HeaderByte;
+        public byte PlayerIdThatWasHit;
+        public int PlayerPin;
+        public byte PlayerIdThatShotThisProjectile;
+        public int ByProjectileDatabaseId;
+        public byte UniqueProjectileId;
+        public byte TickWhenCollisionOccurred;
+        public float impactPosX;
+        public float impactPosY;
+        public float impactPosZ;
+        
+        public void Serialize(NetDataWriter writer)
+        {
+            writer.Put(HeaderByte);
+            writer.Put(PlayerIdThatWasHit);
+            writer.Put(PlayerPin);
+            writer.Put(PlayerIdThatShotThisProjectile);
+            writer.Put(ByProjectileDatabaseId);
+            writer.Put(UniqueProjectileId);
+            writer.Put(TickWhenCollisionOccurred);
+            writer.Put(impactPosX);
+            writer.Put(impactPosY);
+            writer.Put(impactPosZ);
+        }
+
+        public void Deserialize(NetDataReader reader)
+        {
+            PlayerIdThatWasHit = reader.GetByte();
+            PlayerPin = reader.GetInt();
+            PlayerIdThatShotThisProjectile = reader.GetByte();
+            ByProjectileDatabaseId = reader.GetInt();
+            UniqueProjectileId = reader.GetByte();
+            TickWhenCollisionOccurred = reader.GetByte();
+            impactPosX = reader.GetFloat();
+            impactPosY = reader.GetFloat();
+            impactPosZ = reader.GetFloat();
         }
     }
 }

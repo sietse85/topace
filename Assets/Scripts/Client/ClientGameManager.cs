@@ -10,8 +10,8 @@ namespace Client
 {
     public class ClientGameManager : MonoBehaviour
     {
-    
         public static ClientGameManager instance;
+        
         public NetworkTransformStruct[] networkTransforms;
         public VehicleEntity[] vehicleEntities;
         public Player[] players;
@@ -26,15 +26,17 @@ namespace Client
         public ClientVehicleDataHandler vehicleDataHandler;
         public NetworkTransformHandler networkTransformHandler;
         public VehicleController vehicleController;
+        public ProjectileHandler projectileHandler;
         public int securityPin;
-        public uint uniqueProjectileId;
+        public byte uniqueProjectileId;
+        public byte ticknumber;
+        public int index;
 
         private void Awake()
         {
             if (instance == null)
             {
                 instance = this;
-                Debug.Log("A client manager awoke");
             }
             else
             {
@@ -51,6 +53,7 @@ namespace Client
             vehicleDataHandler = gameObject.GetComponent<ClientVehicleDataHandler>();
             networkTransformHandler = gameObject.GetComponent<NetworkTransformHandler>();
             vehicleController = gameObject.GetComponent<VehicleController>();
+            projectileHandler = gameObject.GetComponent<ProjectileHandler>();
             vc = gameObject.GetComponent<VehicleConstructor>();
             players = new Player[64];
         }
@@ -59,53 +62,62 @@ namespace Client
         {
             byte header = r.GetByte();
 
-            switch (header)
+            if (header == HeaderBytes.IncomingSnapShot)
             {
-                case HeaderBytes.AskClientForUsername:
-                    playerDataHandler.SendPlayerName("Unknown");
-                    break;
-                case HeaderBytes.SendPlayerId:
-                    playerDataHandler.SetPlayerId(r);
-                    vehicleDataHandler.TestSpawn();
-                    break;
-                case HeaderBytes.OpenSpawnMenuOnClient:
-                    OpenSpawnMenu();
-                    break;
-                case HeaderBytes.SpawnVehicle:
-                    vc.ConstructVehicleFromPacket(r);
-                    break;
-                case HeaderBytes.NetworkTransFormId:
-                    networkTransformHandler.UpdateNetworkTransform(r);
-                    break;
-                case HeaderBytes.NetworkTransFormsForVehicle:
-                    networkTransformHandler.SetTransformIds(r);
-                    break;
-                case HeaderBytes.RemoveVehicle:
-                    vehicleDataHandler.RemoveVehicle(r);
-                    break;
-                case HeaderBytes.SendPlayerData:
-                    playerDataHandler.UpdatePlayerData(r);
-                    break;
-                case HeaderBytes.SendVehicleData:
-                    vehicleDataHandler.UpdateVehicleInfo(r);
-                    break;
+                index = 0;
+                byte[] snapshot = r.GetRemainingBytes();
+                ticknumber = snapshot[index];
+                index++;
+                
+                while (index < snapshot.Length)
+                {
+                    byte commandHeader = snapshot[index];
+                    index++;
+                    switch (commandHeader)
+                    {
+                        case HeaderBytes.SendPlayerData:
+                            playerDataHandler.UpdatePlayerData(ref snapshot);
+                            break;
+                        case HeaderBytes.SendVehicleData:
+                            vehicleDataHandler.UpdateVehicleInfo(ref snapshot);
+                            break;
+                        case HeaderBytes.FireWeapon:
+                            projectileHandler.SpawnProjectile(ref snapshot);
+                            break;
+                        case HeaderBytes.NetworkTransFormId:
+                            networkTransformHandler.UpdateNetworkTransform(ref snapshot);
+                            break;
+                    }
+
+                }
+            }
+            else
+            {
+                switch (header)
+                {
+                    case HeaderBytes.AskClientForUsername:
+                        playerDataHandler.SendPlayerName("Unknown");
+                        break;
+                    case HeaderBytes.SendPlayerId:
+                        playerDataHandler.SetPlayerId(r);
+                        vehicleDataHandler.TestSpawn();
+                        break;
+                    case HeaderBytes.OpenSpawnMenuOnClient:
+                        break;
+                    case HeaderBytes.SpawnVehicle:
+                        vc.ConstructVehicleFromPacket(r);
+                        break;
+
+                    case HeaderBytes.NetworkTransFormsForVehicle:
+                        networkTransformHandler.SetTransformIds(r);
+                        break;
+                    case HeaderBytes.RemoveVehicle:
+                        vehicleDataHandler.RemoveVehicle(r);
+                        break;
+                }
             }
         }
 
-        public void OpenSpawnMenu()
-        {
-            Debug.Log("open spawn menu");
-            multiplayerMenu.GetComponentInChildren<Canvas>().enabled = false;
-            mainMenu.GetComponentInChildren<Canvas>().enabled = false;
-            spawnMenu.GetComponentInChildren<Canvas>().enabled = true;
-            spawnMenu.GetComponentInChildren<VehicleSelector>().LoadShipList();
-        }
-
-        public void ShowVehicleUI()
-        {
-            multiplayerMenu.GetComponentInChildren<Canvas>().enabled = false;
-            mainMenu.GetComponentInChildren<Canvas>().enabled = false;
-            spawnMenu.GetComponentInChildren<Canvas>().enabled = false;
-        }
+        
     }
 }

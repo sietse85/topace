@@ -6,6 +6,7 @@ TagManager:
   tags:
   - snap_hull
   - snap_turret
+  - spawn
   layers:
   - Default
   - TransparentFX

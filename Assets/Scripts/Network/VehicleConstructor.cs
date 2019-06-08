@@ -10,29 +10,27 @@ namespace Network
 {
     public class VehicleConstructor : MonoBehaviour
     {
-        private NetworkTransformsForVehicle vnt;
-        private Ticker ticker;
-        private bool isServer;
+        private NetworkTransformsForVehicle _vnt;
+        private Ticker _ticker;
+        private bool _isServer;
 
         private void Start()
         {
 
-            isServer = false;
+            _isServer = false;
 
             if (GameManager.instance is GameManager)
             {
                 if (ClientGameManager.instance == null)
-                    isServer = true;
+                    _isServer = true;
             }
             
-            Debug.Log("Did we initializa as a server " + isServer);
-
-            vnt = new NetworkTransformsForVehicle();
-            vnt.HeaderByte = HeaderBytes.NetworkTransFormsForVehicle;
-            ticker = FindObjectOfType<Ticker>();
+            _vnt = new NetworkTransformsForVehicle();
+            _vnt.HeaderByte = HeaderBytes.NetworkTransFormsForVehicle;
+            _ticker = FindObjectOfType<Ticker>();
         }
 
-        public void SpawnExistingVehiclesOnClient(NetPeer peer, int playerId)
+        public void SpawnExistingVehiclesOnClient(NetPeer peer, byte playerId)
         {
             foreach (VehicleEntity v in GameManager.instance.vehicleEntities)
             {
@@ -53,9 +51,9 @@ namespace Network
                     ntIds[i] = t.networkTransformId;
                     i++;
                 }
-                vnt.PlayerId = v.playerId;
-                vnt.NetworkTransformIds = ntIds;
-                GameServer.instance.Send(vnt, peer);
+                _vnt.PlayerId = v.playerId;
+                _vnt.NetworkTransformIds = ntIds;
+                GameServer.instance.Send(_vnt, peer);
             }
         }
 
@@ -76,11 +74,8 @@ namespace Network
             VehicleScriptable v = Loader.instance.vehicles[vehicleDatabaseId];
             GameObject obj = Instantiate(v.prefab, pos, rot);
 
-            if (isServer)
+            if (_isServer)
                 obj.GetComponent<Rigidbody>().isKinematic = true;
-            
-            Debug.Log("Setting the reference to " + playerId);
-            
             
 
             NetworkTransform[] childs = obj.GetComponentsInChildren<NetworkTransform>();
@@ -89,30 +84,47 @@ namespace Network
             foreach (TurretSlot slot in turretSlots)
             {
                 slot.turretSlotNumber = currentSlot;
-                slot.controllerByPlayerId = playerId;
+                slot.controlledByPlayerId = playerId;
                 currentSlot++;
             }
             
             CreateWeaponsOnVehicle(obj, config, v);
 
-            if (isServer)
+            if (_isServer)
             {
                 GameManager.instance.turrets[playerId] = turretSlots;
                 int[] ntIds = AssignNewNetworkTransforms(ref childs, playerId, pos, rot);
                 ConstructVehicleSpawnPacket(playerId, vehicleDatabaseId, pos, rot, config, null);
                 AddToEntityList(playerId, v, vehicleDatabaseId, config);
 
-                vnt.PlayerId = playerId;
-                vnt.NetworkTransformIds = ntIds;
-                Debug.Log(ntIds.Length);
-                foreach (int i in ntIds)
-                {
-                    Debug.Log("Sending id " + i);
-                }
-                GameServer.instance.SendToAll(vnt);
+                _vnt.PlayerId = playerId;
+                _vnt.NetworkTransformIds = ntIds;
+                GameServer.instance.SendToAll(_vnt);
             }
 
-            if (!isServer)
+            
+            //set a reference to the vehicleEntity array on the Vehicle
+            VehicleEntityRef r = obj.AddComponent<VehicleEntityRef>();
+            r.playerId = playerId;
+
+            //finaly set vehicle refs
+            if (_isServer)
+            {
+                r.IsServer(true);
+                GameManager.instance.vehicleEntities[playerId].obj = obj;
+                GameManager.instance.vehicleEntities[playerId].playerId = playerId;
+            }
+            else
+            {
+                r.IsServer(false);
+                ClientGameManager.instance.vehicleEntities[playerId].obj = obj;
+                ClientGameManager.instance.vehicleEntities[playerId].playerId = playerId;
+                ClientGameManager.instance.vehicleEntities[playerId].processInTick = true;
+            }
+            
+            
+            //give control
+            if (!_isServer)
             {
                 if (ClientGameManager.instance.playerId != playerId)
                 {
@@ -122,31 +134,15 @@ namespace Network
                 //if the vehicle is spawned for this player
                 if (playerId == ClientGameManager.instance.playerId)
                 {
-                    ClientGameManager.instance.vehicleController.GiveControlToPlayer(obj, vehicleDatabaseId);
+                    ClientGameManager.instance.vehicleController.GiveControlToPlayer(obj, vehicleDatabaseId, playerId);
+                    
                 }
-            }
-            
-            VehicleEntityRef r = obj.AddComponent<VehicleEntityRef>();
-            r.playerId = playerId;
-
-            //finaly set vehicle refs
-            if (isServer)
-            {
-                GameManager.instance.vehicleEntities[playerId].obj = obj;
-                GameManager.instance.vehicleEntities[playerId].playerId = playerId;
-            }
-            else
-            {
-                ClientGameManager.instance.vehicleEntities[playerId].obj = obj;
-                ClientGameManager.instance.vehicleEntities[playerId].playerId = playerId;
-                ClientGameManager.instance.vehicleEntities[playerId].processInTick = true;
             }
         }
 
         public void ConstructVehicleSpawnPacket(byte playerId, int vehicleDatabaseId, Vector3 pos,
             Quaternion rot, byte[] config, NetPeer peer)
         {
-            Debug.Log("Spawning existing vehicle from the gameworld on this client..." + playerId);
             SpawnVehicle s = new SpawnVehicle(playerId, vehicleDatabaseId, pos.x, pos.y, pos.z, rot.x, rot.y,
                 rot.z, rot.w, config);
             s.HeaderByte = HeaderBytes.SpawnVehicle;
@@ -188,12 +184,11 @@ namespace Network
 
         public int GetNextFreeNetworkTransformSlot()
         {
-            for (int i = 0; i < ticker.networkTransforms.Length; i++)
+            for (int i = 0; i < _ticker.networkTransforms.Length; i++)
             {
-                if (!ticker.networkTransforms[i].slotOccupied)
+                if (!_ticker.networkTransforms[i].slotOccupied)
                 {
-                    ticker.networkTransforms[i].slotOccupied = true;
-                    Debug.Log("Next free slot is " + i);
+                    _ticker.networkTransforms[i].slotOccupied = true;
                     return i;
                 }
             }
@@ -211,11 +206,20 @@ namespace Network
                 int newNetworkTransformId = GetNextFreeNetworkTransformSlot();
                 t.SetTransformId(newNetworkTransformId);
                 t.SetPlayerId(playerId);
+                Debug.Log(GameManager.instance);
+                Debug.Log(GameManager.instance.ticker);
+                Debug.Log(GameManager.instance.ticker.networkTransforms);
+                Debug.Log(GameManager.instance.ticker.networkTransforms[newNetworkTransformId]);
+                Debug.Log(GameManager.instance.ticker.networkTransforms[newNetworkTransformId].playerId);
                 GameManager.instance.ticker.networkTransforms[newNetworkTransformId].playerId = playerId;
                 GameManager.instance.ticker.networkTransforms[newNetworkTransformId].processInTick = true;
                 GameManager.instance.ticker.networkTransforms[newNetworkTransformId].transform = t.transform;
                 GameManager.instance.ticker.networkTransforms[newNetworkTransformId].transform.position = position;
                 GameManager.instance.ticker.networkTransforms[newNetworkTransformId].transform.rotation = rotation;
+                if (t.isMain)
+                {
+                    GameManager.instance.ticker.networkTransforms[newNetworkTransformId].isMain = true;
+                }
                 ntIds[i] = newNetworkTransformId;
                 i++;
             }

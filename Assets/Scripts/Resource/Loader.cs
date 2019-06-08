@@ -31,7 +31,6 @@ namespace Resource
             projectiles = new Dictionary<int, Projectile>();
             Weapon[] loadWeapons = Resources.LoadAll<Weapon>("");
             VehicleScriptable[] loadVehicles = Resources.LoadAll<VehicleScriptable>("");
-            Debug.Log(loadVehicles.Length);
             Module[] loadModules = Resources.LoadAll<Module>("");
             Projectile[] loadProjectiles = Resources.LoadAll<Projectile>("");
 

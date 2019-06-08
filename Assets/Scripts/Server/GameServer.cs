@@ -15,9 +15,7 @@ namespace Server
         public int maxPlayers = 64;
         public int port = 5000;
         public string ip = "127.0.0.1";
-        public float ticksPerSecond;
-        
-        //send the networktransfrom  updates to client each ... seconds
+        public int ticksPerSecond = 30;
         public float updateSpeed = 0.1f;
 
         private void Awake()
@@ -39,11 +37,9 @@ namespace Server
 
             if (!started)
             {
-                Debug.Log("Server could not be started!");
             }
             else
             {
-                Debug.Log("Server Started");
                 _server.BroadcastReceiveEnabled = true;
                 _server.UpdateTime = 50;
             }
@@ -84,12 +80,15 @@ namespace Server
                 if (GameManager.instance.players[i].slotOccupied)
                 {
                     GameManager.instance.players[i].peer.Send(buf, 0, length, DeliveryMethod.ReliableUnordered);
+                    if (i % 64 == 0)
+                        _server.Flush();
                 }
             }
         }
 
         public void OnPeerConnected(NetPeer peer)
         {
+            Debug.Log(peer.Id);
             GameManager.instance.playerDataHandler.HandleNewConnection(peer);
         }
 
@@ -100,7 +99,6 @@ namespace Server
 
         public void OnNetworkError(IPEndPoint endPoint, SocketError socketError)
         {
-            Debug.Log(socketError.ToString());
         }
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
@@ -121,7 +119,6 @@ namespace Server
 
         public void OnConnectionRequest(ConnectionRequest request)
         {
-            Debug.Log("Connection requested");
             request.AcceptIfKey("topace");
         }
 

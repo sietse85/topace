@@ -14,11 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   itemId: 1
   prefab: {fileID: 2012441633830698143, guid: 08f592fc075ef43408d01bc2c6900b61, type: 3}
-  projectileSpeed: 1
+  projectileSpeed: 200
   damage: 20
   shieldPenetration: 1
   armorPenetration: 0
   applyDrop: 0
   startDropAfterDisctance: 0
   dropSpeed: 0
+  sizeDiameter: 0.3
   timeToLive: 100

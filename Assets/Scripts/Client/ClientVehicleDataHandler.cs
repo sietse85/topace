@@ -8,16 +8,15 @@ namespace Client
 {
     public class ClientVehicleDataHandler : MonoBehaviour
     {
-        private byte[] floatBuf;
+        private byte[] _floatBuf;
 
         private void Start()
         {
-            floatBuf = new byte[4];
+            _floatBuf = new byte[4];
         }
 
         public void TestSpawn()
         {
-            Debug.Log("test spawn");
             byte[] config = new byte[8];
             config[0] = 1;
             config[1] = 1;
@@ -26,33 +25,29 @@ namespace Client
             GameClient.instance.Send(packet);
         }
 
-        public void UpdateVehicleInfo(NetDataReader r)
+        public void UpdateVehicleInfo(ref byte[] snapshot)
         {
-            byte[] bytes = r.GetRemainingBytes();
-            int index = 0;
-            while (index < bytes.Length)
-            {
-                byte playerId = bytes[index];
-                index += sizeof(byte);
-                Buffer.BlockCopy(bytes, index, floatBuf, 0, sizeof(float));
-                index += sizeof(float); 
-                float currentArmor = ByteHelper.instance.ByteToFloat(floatBuf);
-                Buffer.BlockCopy(bytes, index, floatBuf, 0, sizeof(float));
-                index += sizeof(float); 
-                float currentHealth = ByteHelper.instance.ByteToFloat(floatBuf);
-                Buffer.BlockCopy(bytes, index, floatBuf, 0, sizeof(float));
-                index += sizeof(float);
-                float currentShield = ByteHelper.instance.ByteToFloat(floatBuf);
-                Buffer.BlockCopy(bytes, index, floatBuf, 0, sizeof(float));
-                float currentBattery = ByteHelper.instance.ByteToFloat(floatBuf);
-                index += sizeof(float);
+            int index = ClientGameManager.instance.index;
+            byte playerId = snapshot[index];
+            index += sizeof(byte);
+            Buffer.BlockCopy(snapshot, index, _floatBuf, 0, sizeof(float));
+            index += sizeof(float); 
+            float currentArmor = ByteHelper.instance.ByteToFloat(_floatBuf);
+            Buffer.BlockCopy(snapshot, index, _floatBuf, 0, sizeof(float));
+            index += sizeof(float); 
+            float currentHealth = ByteHelper.instance.ByteToFloat(_floatBuf);
+            Buffer.BlockCopy(snapshot, index, _floatBuf, 0, sizeof(float));
+            index += sizeof(float);
+            float currentShield = ByteHelper.instance.ByteToFloat(_floatBuf);
+            Buffer.BlockCopy(snapshot, index, _floatBuf, 0, sizeof(float));
+            float currentBattery = ByteHelper.instance.ByteToFloat(_floatBuf);
+            index += sizeof(float);
 
-                ClientGameManager.instance.vehicleEntities[playerId].currentArmor = currentArmor;
-                ClientGameManager.instance.vehicleEntities[playerId].currentHealth = currentHealth;
-                ClientGameManager.instance.vehicleEntities[playerId].currentShield = currentShield;
-                ClientGameManager.instance.vehicleEntities[playerId].battery = currentBattery;
-            }
-
+            ClientGameManager.instance.vehicleEntities[playerId].currentArmor = currentArmor;
+            ClientGameManager.instance.vehicleEntities[playerId].currentHealth = currentHealth;
+            ClientGameManager.instance.vehicleEntities[playerId].currentShield = currentShield;
+            ClientGameManager.instance.vehicleEntities[playerId].battery = currentBattery;
+            ClientGameManager.instance.index = index;
         }
 
         public void RemoveVehicle(NetDataReader r)
@@ -61,18 +56,17 @@ namespace Client
             rv.Deserialize(r);
 
             NetworkTransform[] networkTransforms =
-                ClientGameManager.instance.vehicleEntities[rv.playerId].obj.GetComponentsInChildren<NetworkTransform>();
+                ClientGameManager.instance.vehicleEntities[rv.PlayerId].obj.GetComponentsInChildren<NetworkTransform>();
             
             foreach (NetworkTransform t in networkTransforms)
             {
                 ClientGameManager.instance.networkTransforms[t.networkTransformId].slotOccupied = false;
                 ClientGameManager.instance.networkTransforms[t.networkTransformId].processInTick = false;
             }
-            Destroy(ClientGameManager.instance.vehicleEntities[rv.playerId].obj);
-            ClientGameManager.instance.vehicleEntities[rv.playerId].processInTick = false;
+            Destroy(ClientGameManager.instance.vehicleEntities[rv.PlayerId].obj);
+            ClientGameManager.instance.vehicleEntities[rv.PlayerId].processInTick = false;
     
 
-            Debug.Log("Removed vehicle from player " + rv.playerId);
         }
     }
 }

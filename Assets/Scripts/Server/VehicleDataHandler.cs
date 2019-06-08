@@ -7,9 +7,8 @@ namespace Server
 {
     public class VehicleDataHandler : MonoBehaviour
     {
-        private Vector3 tmpPos;
-        private Quaternion tmpRot;
-
+        private Vector3 _tmpPos;
+        private Quaternion _tmpRot;
         private NetworkTransformUpdate u;
         private Ticker _ticker;
 
@@ -17,8 +16,8 @@ namespace Server
         {
             GameManager.instance = GetComponent<GameManager>();
             _ticker = GetComponent<Ticker>();
-            tmpPos = new Vector3();
-            tmpRot = new Quaternion();
+            _tmpPos = new Vector3();
+            _tmpRot = new Quaternion();
         }
 
         public void ClientRequestedVehicleSpawn(NetPeer peer, NetPacketReader r)
@@ -43,17 +42,17 @@ namespace Server
             //stops players from sending networktransforms of other players
             if (GameManager.instance.players[u.PlayerId].securityPin != u.PlayerPin)
             {
-                Debug.Log(GameManager.instance.players[u.PlayerId].securityPin + " pin does not match "  + u.PlayerPin);
                 return;
             } 
-            tmpPos.x = u.LocX;
-            tmpPos.y = u.LocY;
-            tmpPos.z = u.LocZ;
-            tmpRot.x = u.RotX;
-            tmpRot.y = u.RotY;
-            tmpRot.z = u.RotZ;
-            tmpRot.w = u.RotW;
-            _ticker.networkTransforms[u.NetworkTransformId].transform.SetPositionAndRotation(tmpPos, tmpRot);
+            _tmpPos.x = u.LocX;
+            _tmpPos.y = u.LocY;
+            _tmpPos.z = u.LocZ;
+            _tmpRot.x = u.RotX;
+            _tmpRot.y = u.RotY;
+            _tmpRot.z = u.RotZ;
+            _tmpRot.w = u.RotW;
+            _ticker.networkTransforms[u.NetworkTransformId].transform.SetPositionAndRotation(_tmpPos, _tmpRot);
+            
         }
         
         public void SendRemoveVehicleByPlayerId(byte playerId)

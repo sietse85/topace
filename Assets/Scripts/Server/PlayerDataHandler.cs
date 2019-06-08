@@ -13,7 +13,6 @@ namespace Server
                 if (!GameManager.instance.players[i].slotOccupied)
                 {
                     GameManager.instance.players[i].slotOccupied = true;
-                    Debug.Log("The next free playerslot = " + i);
                     return i;
                 }
             }
@@ -51,7 +50,6 @@ namespace Server
                 
                 if (GameManager.instance.players[i].peer.Id == peer.Id)
                 {
-                    Debug.Log("Player was disconnected, freeing slot and check if vehicle and networktransforms must be removed");
                     // free this player slot
                     GameManager.instance.players[i].processInTick = false;
                     GameManager.instance.players[i].slotOccupied = false;
@@ -66,13 +64,11 @@ namespace Server
                         GameManager.instance.vehicleEntities[i].obj.GetComponentsInChildren<NetworkTransform>();
                         foreach (NetworkTransform t in networkTransforms)
                         {
-                            Debug.Log("Removing networktransformId: " + t.networkTransformId);
                             GameManager.instance.ticker.networkTransforms[t.networkTransformId].slotOccupied = false;
                             GameManager.instance.ticker.networkTransforms[t.networkTransformId].processInTick = false;
                         }
                         Destroy(GameManager.instance.vehicleEntities[i].obj);
                         GameManager.instance.vehicleEntities[i].processInTick = false;
-                        Debug.Log("Sending the players to remove the vehicle for " + i);
                         GameManager.instance.vehicleDataHandler.SendRemoveVehicleByPlayerId(i);
                     }
                 }

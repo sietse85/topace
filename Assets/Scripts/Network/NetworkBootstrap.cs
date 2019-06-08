@@ -4,9 +4,9 @@ namespace Network
 {
     public class NetworkBootstrap : MonoBehaviour
     {
-        private bool _multiplayer = false;
+        private bool _multiplayer;
 
-        private void OnEnable()
+        private void Awake()
         {
             string[] args = System.Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length; i++)

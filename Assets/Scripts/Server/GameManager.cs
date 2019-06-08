@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using LiteNetLib;
 using UnityEngine;
 using Network;
@@ -21,7 +22,7 @@ namespace Server
         public Ticker ticker;
         public int networkTransformId;
 
-        void Start()
+        void Awake()
         {
             if (instance == null)
             {
@@ -31,7 +32,12 @@ namespace Server
             {
                 Destroy(this);
             }
-            
+
+
+        }
+
+        private void Start()
+        {
             turrets = new Dictionary<int, TurretSlot[]>(GameServer.instance.maxPlayers);
             players = new Player[GameServer.instance.maxPlayers];
             playerNames = new Dictionary<int, string>(GameServer.instance.maxPlayers);
@@ -40,9 +46,8 @@ namespace Server
             playerDataHandler = gameObject.GetComponent<PlayerDataHandler>();
             vehicleDataHandler = gameObject.GetComponent<VehicleDataHandler>();
             vc = gameObject.GetComponent<VehicleConstructor>();
-            ticker = gameObject.GetComponent<Ticker>();
+            ticker = GetComponent<Ticker>();
         }
-
 
         // Update is called once per frame
         public void HandleReceived(NetPeer peer, NetPacketReader r)
@@ -61,6 +66,9 @@ namespace Server
                     break;
                 case HeaderBytes.FireWeapon:
                     ticker.AddFireCommand(r);
+                    break;
+                case HeaderBytes.ReportCollision:
+                    ticker.AddCollisionReport(r);
                     break;
             }
         }

@@ -1,6 +1,8 @@
-﻿using Client;
+﻿using System.Collections;
+using Client;
 using Resource;
 using Scriptable;
+using UI;
 using UnityEngine;
 
 namespace Vehicle
@@ -23,6 +25,8 @@ namespace Vehicle
         public bool vehicleInitialized;
         private FoiledWings[] _wings;
         private TurretSlot[] turrets;
+        private bool _canFoil;
+        public bool isLandVehicle;
 
         // Start is called before the first frame update
         void InitVehicle(int vehicleDatabaseId, GameObject vehicle)
@@ -39,7 +43,11 @@ namespace Vehicle
             yaw = 0f;
             roll = 0f;
             turrets = vehicleControlled.GetComponentsInChildren<TurretSlot>();
-            Debug.Log("Ship has " + turrets.Length + " turrets");
+            isLandVehicle = Loader.instance.vehicles[vehicleDatabaseId].isLandVehicle;
+
+            _canFoil = true;
+            StartCoroutine(FoilWings());
+            
         }
 
         // Update is called once per frame
@@ -48,10 +56,13 @@ namespace Vehicle
             if (!vehicleControl || !vehicleInitialized)
                 return;
 
-            GetMouseInput();
-            GetKeyInput();
-            UpdateRotation();
-            Move();
+            if (!isLandVehicle)
+            {
+                GetMouseInput();
+                GetKeyInput();
+                UpdateRotation();
+                Move();
+            }
         }
 
         private void GetMouseInput()
@@ -63,11 +74,6 @@ namespace Vehicle
 
         private void GetKeyInput()
         {
-            if (Input.GetButton("TakeOff"))
-            {
-                FoilWings();
-            }
-
             if (Input.GetButton("Accelerate"))
             {
                 currentSpeed += Input.GetAxis("Accelerate") * _acceleration * Time.deltaTime;
@@ -81,20 +87,37 @@ namespace Vehicle
             {
                 foreach (TurretSlot slot in turrets)
                 {
-                    slot.Fire();
+                    slot.Fire(Vector3.zero);
                 }
             }
         }
 
-        private void FoilWings()
+        private IEnumerator FoilWings()
         {
-            _wings = vehicleControlled.gameObject.GetComponentsInChildren<FoiledWings>();
-            if (_wings.Length > 0)
+            while (true)
             {
-                foreach (FoiledWings wing in _wings)
+                if (Input.GetButton("TakeOff"))
                 {
-                    wing.FoilWings();
+
+
+                    if (_canFoil)
+                    {
+                        _canFoil = false;
+                        _wings = vehicleControlled.gameObject.GetComponentsInChildren<FoiledWings>();
+                        if (_wings.Length > 0)
+                        {
+                            foreach (FoiledWings wing in _wings)
+                            {
+                                wing.FoilWings();
+                            }
+                        }
+                    }
+                    
+
                 }
+                
+                yield return new WaitForSeconds(1f);
+                _canFoil = true;
             }
         }
 
@@ -108,7 +131,7 @@ namespace Vehicle
             _vTransform.position += _vTransform.forward * currentSpeed * Time.deltaTime;
         }
 
-        public void GiveControlToPlayer(GameObject vehicle, int vehicleDatabaseId)
+        public void GiveControlToPlayer(GameObject vehicle, int vehicleDatabaseId, byte vehicleId)
         {
             if (!vehicleInitialized)
             {
@@ -118,7 +141,14 @@ namespace Vehicle
 
             vehicleControl = true;
             _vTransform = vehicleControlled.transform;
-            ClientGameManager.instance.ShowVehicleUI();
+            UIManager.instance.ShowVehicleUI(vehicleDatabaseId);
+            UIManager.instance.SetVehicleIdToMonitorInUI(vehicleId);
+
+            Transform camslot = vehicle.gameObject.transform.Find("cockpit").transform.Find("cameraslot");
+            GameObject mainCam = GameObject.Find("MainCam");
+            mainCam.transform.SetParent(camslot);
+            mainCam.gameObject.transform.position = camslot.position;
+            mainCam.gameObject.transform.rotation = camslot.rotation;
         }
     }
 }

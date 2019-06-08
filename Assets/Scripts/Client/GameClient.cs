@@ -35,15 +35,15 @@ namespace Client
             _client = new NetManager(this);
             _client.UnconnectedMessagesEnabled = true;
             _client.UpdateTime = 25;
-            if (_client.Start())
-            {
-                Debug.Log("Client started");
-            }
+            _client.Start();
         }
 
         public void Connect()
         {
-            _client.Connect("127.0.0.1", 5000, "topace");
+            if (_client.IsRunning)
+            {
+                _client.Connect("127.0.0.1", 5000, "topace");
+            }
         }
 
         // Update is called once per frame
@@ -54,14 +54,12 @@ namespace Client
 
         public void OnPeerConnected(NetPeer peer)
         {
-            Debug.Log(("[C] connected " + peer.EndPoint));
             _server = peer;
         }
 
 
         public void OnNetworkError(IPEndPoint endPoint, SocketError socketError)
         {
-            Debug.Log("[C] " + socketError);
         }
 
         public void OnNetworkReceive(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
@@ -74,7 +72,6 @@ namespace Client
         {
             if (messageType == UnconnectedMessageType.BasicMessage && _client.PeersCount == 0 && reader.GetInt() == 1)
             {
-                Debug.Log("[CLIENT] Received discovery response. Connecting to: " + remoteEndPoint);
                 _client.Connect(remoteEndPoint, "topace");
             }
         }
@@ -89,7 +86,6 @@ namespace Client
 
         public void OnPeerDisconnected(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            Debug.Log("[C] We disconnected because " + disconnectInfo.Reason);
         }
         
         public void Send<T>(T packet) where T : struct, INetSerializable

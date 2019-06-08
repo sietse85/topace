@@ -14,6 +14,7 @@ namespace Scriptable
         public bool applyDrop;
         public float startDropAfterDisctance;
         public float dropSpeed;
+        public float sizeDiameter;
         public float timeToLive;
     }
 }

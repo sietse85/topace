@@ -12,30 +12,41 @@ namespace Server
     public class Ticker : MonoBehaviour
     {
         //buffers to fill with various data
-        private byte[] networkTransformData;
-        private byte[] vehicleData;
-        private byte[] playerData;
-        private byte[] fireBuf;
+        private byte[] _snapshot;
+        
+        private FireCommand[] _fireCommands;
+        private CollisionReport[] _reportedCollisions;
+        private ReportCollision _reportCollision;
+        private int _reportCollisionIndex;
+        private FireWeapon _firePacket;
+        private int _fireCommandIndex;
+        private Stopwatch s;
+        public byte tickNr;
+        private int index;
+        public NetworkTransformHistory[] transformHistory;
         
         public NetworkTransformStruct[] networkTransforms;
-
-        private int sizePacket = 507;
-        private FireCommand[] fireCommands;
-        private FireWeapon firePacket;
-        private int fireCommandIndex = 0;
-        private Stopwatch s;
         
-        private void Start()
+        private void Awake()
         {
-            networkTransformData = new byte[sizePacket];
-            vehicleData = new byte[sizePacket];
-            playerData = new byte[sizePacket];
-            fireBuf = new byte[sizePacket];
-            firePacket = new FireWeapon();
-            fireCommands = new FireCommand[512];
+            _snapshot = new byte[65000];
+            _firePacket = new FireWeapon();
+            _reportCollision = new ReportCollision();
+            _fireCommands = new FireCommand[1024];
+            _reportedCollisions = new CollisionReport[1024];
             s = new Stopwatch();
             networkTransforms = new NetworkTransformStruct[1024];
+        }
+
+        private void Start()
+        {
             GameServer.instance.updateSpeed = 1f / GameServer.instance.ticksPerSecond;
+            transformHistory = new NetworkTransformHistory[GameServer.instance.maxPlayers * GameServer.instance.ticksPerSecond];
+            StartTicking();
+        }
+
+        public void StartTicking()
+        {
             StartCoroutine(Tick());
         }
 
@@ -45,157 +56,232 @@ namespace Server
             {
                 s.Start();
                 s.Restart();
+
+                //indicate a snapshot packet
+                index = 0;
+                _snapshot[0] = HeaderBytes.IncomingSnapShot;
+                _snapshot[1] = tickNr;
+                index +=2;
+
                 
-                SendVehicleInformationToClients();
+
+                //process the gamestate and add info to snapshot
+                RecordNetworkTransformHistory();
+                ProcessCollisions();
+                AddVehicleInfoToSnapShot();
                 ProcessFireCommands();
-                int i = SendNetworkTransformsToClient();
-                SendPlayerInformationToClients();
+                AddNetworkTransformsToSnapshot();
+                AddPlayerInfoToSnapShot();
                 
                 s.Stop();
                 
-                if (GameManager.instance.players != null)
-                    Debug.Log("The tick took " + (s.ElapsedTicks /10000f).ToString("#.0000000") + " ms to process");
+                //send the snapshot to all connected clients
+                GameServer.instance.SendBytesToAll(_snapshot, index);
+                tickNr++;
+                if (tickNr == GameServer.instance.ticksPerSecond)
+                {
+                    Debug.Log("The tick took " + (s.ElapsedTicks /10000f).ToString("#.000") + " ms to process");
+                    tickNr = 0;
+                }
 
                 yield return new WaitForSeconds(GameServer.instance.updateSpeed);
             }
         }
 
-        private void ProcessFireCommands()
+        public void RecordNetworkTransformHistory()
         {
-            fireCommandIndex = 0;
-            int index = 0;
-            fireBuf[0] = HeaderBytes.FireWeapon;
-            for (int i = 0; i < fireCommands.Length; i++)
+            for (int i = 0; i < GameManager.instance.vehicleEntities.Length; i++)
             {
-                if (!fireCommands[i].process)
+                VehicleEntity v = GameManager.instance.vehicleEntities[i];
+                if (!v.processInTick)
                 {
-                    return;
+                    continue;
+                }
+                transformHistory[i * GameServer.instance.maxPlayers + tickNr].v = v.obj.transform.position;
+                transformHistory[i * GameServer.instance.maxPlayers + tickNr].q = v.obj.transform.rotation;
+            }
+        }
+
+        private void ProcessCollisions()
+        {
+            _reportCollisionIndex = 0;
+            for (int i = 0; i < _reportedCollisions.Length; i++)
+            {
+                if (!_reportedCollisions[i].Process)
+                    break;
+
+               
+                if (!GameManager.instance.vehicleEntities[_reportedCollisions[i].PlayerIdThatWasHit].processInTick)
+                {
+                    _reportedCollisions[i].Process = false;
+                    continue;
                 }
                 
-                fireCommands[i].process = false;
+                Debug.Log("Processing collision");
 
-                if (!GameManager.instance.turrets[fireCommands[i].vehicleId][fireCommands[i].weaponSlotFired].inCoolDown)
+                VehicleEntity e = GameManager.instance.vehicleEntities[_reportedCollisions[i].PlayerIdThatWasHit];
+                
+                Vector3 oldPos = e.obj.transform.position;
+                Quaternion oldRot = e.obj.transform.rotation; 
+
+                e.obj.transform.position =
+                    transformHistory[
+                        _reportedCollisions[i].PlayerIdThatWasHit * GameServer.instance.maxPlayers +
+                        _reportedCollisions[i].TickWhenCollisionOccurred
+                        ].v;
+                
+                e.obj.transform.rotation =
+                    transformHistory[
+                        _reportedCollisions[i].PlayerIdThatWasHit * GameServer.instance.maxPlayers +
+                        _reportedCollisions[i].TickWhenCollisionOccurred
+                    ].q;
+                
+                // do raycast from referenced projectile
+                
+                ProjectileReference r = GameManager.instance.projectiles[
+                    _reportedCollisions[i].PlayerIdThatShotThisProjectile * 100 +
+                    _reportedCollisions[i].UniqueProjectileId
+                ];
+
+                if (!r.active)
                 {
-                    //fire the turret on the server itself
-                    GameManager.instance.turrets[fireCommands[i].vehicleId][fireCommands[i].weaponSlotFired].Fire();
+                    _reportedCollisions[i].Process = false;
+                    continue;
+                }
+                
+
+                r.entity.transform.position = _reportedCollisions[i].impactPos;
+                int? playerId = r.entity.DoRayCast(false);
+
+                if (playerId != null)
+                {
+                    //process damage and flash players hitmarker
+                }
+
+                //put vehicle that was checked back to old position
+                e.obj.transform.position = oldPos;
+                e.obj.transform.rotation = oldRot;
+                
+                _reportedCollisions[i].Process = false;
+            }
+        }
+
+        private void ProcessFireCommands()
+        {
+            _fireCommandIndex = 0;
+            for (int i = 0; i < _fireCommands.Length; i++)
+            {
+                if (!_fireCommands[i].Process)
+                {
+                    break;
+                }
+                
+                _snapshot[index] = HeaderBytes.FireWeapon;
+                index++;
+                
+                _fireCommands[i].Process = false;
+
+                if (!GameManager.instance.turrets[_fireCommands[i].VehicleId][_fireCommands[i].WeaponSlotFired].inCoolDown)
+                {
+                    Vector3 pos =
+                        GameManager.instance.turrets[_fireCommands[i].VehicleId][_fireCommands[i].WeaponSlotFired]
+                            .gameObject.transform.position;
+                    
+                    Quaternion rot =
+                        GameManager.instance.turrets[_fireCommands[i].VehicleId][_fireCommands[i].WeaponSlotFired]
+                            .gameObject.transform.rotation;
+
+                    FireCommand f = _fireCommands[i];
+                    
+                    Buffer.BlockCopy(ByteHelper.instance.IntToByte(f.ProjectileId), 0,  _snapshot, index, sizeof(int));
+                    index += sizeof(int);
+                    _snapshot[index] = f.VehicleId;
+                    index += sizeof(byte);
+                    _snapshot[index] = f.UniqueProjectileId;
+                    index += sizeof(byte);
+                    Buffer.BlockCopy(ByteHelper.instance.Vector3ToByte(pos), 0, _snapshot, index, sizeof(float) * 3);
+                    index += sizeof(float) * 3;
+                    Buffer.BlockCopy(ByteHelper.instance.QuaternionToByte(rot), 0, _snapshot, index, sizeof(float) * 4);
+                    index += sizeof(float) * 4;
+
+                    f.Process = false;
+                    
+                    GameManager.instance.turrets[_fireCommands[i].VehicleId][_fireCommands[i].WeaponSlotFired].Fire(_fireCommands[i].Rotation);
                 }
             }
         }
 
-        private int SendNetworkTransformsToClient()
+        private void AddNetworkTransformsToSnapshot()
         {
-            int index = 0;
-            networkTransformData[index] = HeaderBytes.NetworkTransFormId;
-            index++;
-            int iterations = 0;
             for(int i = 0; i < networkTransforms.Length; i++)
             {
                 if (!networkTransforms[i].processInTick)
                     continue;
-                Buffer.BlockCopy(ByteHelper.instance.Vector3ToByte(networkTransforms[i].transform.position), 0, networkTransformData, index, sizeof(float) * 3);
-                index += sizeof(float) * 3;
-                Buffer.BlockCopy(ByteHelper.instance.QuaternionToByte(networkTransforms[i].transform.rotation), 0, networkTransformData, index, sizeof(float) * 4);
-                index += sizeof(float) * 4;
-                Buffer.BlockCopy(ByteHelper.instance.IntToByte(i), 0, networkTransformData, index, sizeof(int));
-                index += sizeof(int);
-                networkTransformData[index] = networkTransforms[i].playerId;
-                index += sizeof(byte);
-
-                //no room left in buffer, send and go on
-                if (sizePacket - index < 34)
-                {
-                    GameServer.instance.SendBytesToAll(networkTransformData, index);
-                    ClearBuf(ref networkTransformData);
-                    index = 0;
-                    networkTransformData[index] = HeaderBytes.NetworkTransFormId;
-                    index++;
-                }
                 
-                iterations++;
+                _snapshot[index] = HeaderBytes.NetworkTransFormId;
+                index += sizeof(byte);
+                Buffer.BlockCopy(ByteHelper.instance.Vector3ToByte(networkTransforms[i].transform.position), 0, _snapshot, index, sizeof(float) * 3);
+                index += sizeof(float) * 3;
+                Buffer.BlockCopy(ByteHelper.instance.QuaternionToByte(networkTransforms[i].transform.rotation), 0, _snapshot, index, sizeof(float) * 4);
+                index += sizeof(float) * 4;
+                Buffer.BlockCopy(ByteHelper.instance.IntToByte(i), 0, _snapshot, index, sizeof(int));
+                index += sizeof(int);
+                _snapshot[index] = networkTransforms[i].playerId;
+                index += sizeof(byte);
             }
-            
-            GameServer.instance.SendBytesToAll(networkTransformData, index);
-            ClearBuf(ref networkTransformData);
-
-            return iterations;
         }
 
-        public void SendVehicleInformationToClients()
+        public void AddVehicleInfoToSnapShot()
         {
-            int index = 0;
-            vehicleData[index] = HeaderBytes.SendVehicleData;
-            index += sizeof(byte);
             
             for (int i = 0; i < GameManager.instance.vehicleEntities.Length; i++)
             {
                 VehicleEntity entity = GameManager.instance.vehicleEntities[i];
                 if (!entity.processInTick)
                     continue;
-
-                vehicleData[index] = (byte) i;
-                index += sizeof(byte);
-                Buffer.BlockCopy(ByteHelper.instance.FloatToByte(entity.currentArmor), 0, vehicleData, index, sizeof(float));
-                index += sizeof(float);
-                Buffer.BlockCopy(ByteHelper.instance.FloatToByte(entity.currentHealth), 0, vehicleData, index, sizeof(float));
-                index += sizeof(float);
-                Buffer.BlockCopy(ByteHelper.instance.FloatToByte(entity.currentShield), 0, vehicleData, index, sizeof(float));
-                index += sizeof(float);
-                Buffer.BlockCopy(ByteHelper.instance.FloatToByte(entity.battery), 0, vehicleData, index, sizeof(float));
-                index += sizeof(float);
-
-                if (sizePacket - index < 18)
-                {
-                    GameServer.instance.SendBytesToAll(vehicleData, index);
-                    ClearBuf(ref vehicleData);
-                    index = 0;
-                    vehicleData[0] = HeaderBytes.SendVehicleData;
-                    index += sizeof(byte);
-                }
                 
-                GameServer.instance.SendBytesToAll(vehicleData, index);
-                ClearBuf(ref vehicleData);
+                _snapshot[index] = HeaderBytes.SendVehicleData;
+                index += sizeof(byte);
+                _snapshot[index] = (byte) i;
+                index += sizeof(byte);
+                Buffer.BlockCopy(ByteHelper.instance.FloatToByte(entity.currentArmor), 0, _snapshot, index, sizeof(float));
+                index += sizeof(float);
+                Buffer.BlockCopy(ByteHelper.instance.FloatToByte(entity.currentHealth), 0, _snapshot, index, sizeof(float));
+                index += sizeof(float);
+                Buffer.BlockCopy(ByteHelper.instance.FloatToByte(entity.currentShield), 0, _snapshot, index, sizeof(float));
+                index += sizeof(float);
+                Buffer.BlockCopy(ByteHelper.instance.FloatToByte(entity.battery), 0, _snapshot, index, sizeof(float));
+                index += sizeof(float);
             }
         }
 
-        public void SendPlayerInformationToClients()
+        public void AddPlayerInfoToSnapShot()
         {
-            if (GameManager.instance == null)
-            {
-                Debug.Log("Gamemanager null");
-                return;
-            }
-
             for (int i = 0; i < GameManager.instance.players.Length; i++)
             {
-                
                 if(!GameManager.instance.players[i].processInTick)
                     continue;
                 
-                int index = 0;
-                playerData[index] = HeaderBytes.SendPlayerData;
-                index++;
-                    
-                Buffer.BlockCopy(ByteHelper.instance.IntToByte(i), 0, playerData, index, sizeof(int));
+                _snapshot[index] = HeaderBytes.SendPlayerData;
+                index += sizeof(byte);
+                _snapshot[index] = (byte) i;
+                index += sizeof(byte);
+                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].latency), 0, _snapshot, index, sizeof(int));
                 index += sizeof(int);
-                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].latency), 0, playerData, index, sizeof(int));
+                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].score), 0, _snapshot, index, sizeof(int));
                 index += sizeof(int);
-                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].score), 0, playerData, index, sizeof(int));
+                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].kills), 0, _snapshot, index, sizeof(int));
                 index += sizeof(int);
-                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].kills), 0, playerData, index, sizeof(int));
+                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].deaths), 0, _snapshot, index, sizeof(int));
                 index += sizeof(int);
-                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].deaths), 0, playerData, index, sizeof(int));
+                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].shotsFired), 0, _snapshot, index, sizeof(int));
                 index += sizeof(int);
-                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].shotsFired), 0, playerData, index, sizeof(int));
+                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].shotsHit), 0, _snapshot, index, sizeof(int));
                 index += sizeof(int);
-                Buffer.BlockCopy(ByteHelper.instance.IntToByte(GameManager.instance.players[i].shotsHit), 0, playerData, index, sizeof(int));
-                index += sizeof(int);
-                
-                GameServer.instance.SendBytesToAll(playerData, index); 
-                ClearBuf(ref playerData);
             }
         }
 
-        public void ClearBuf(ref byte[] buf)
+        public static void ClearBuf(ref byte[] buf)
         {
             foreach (byte b in buf)
             {
@@ -205,15 +291,42 @@ namespace Server
 
         public void AddFireCommand(NetPacketReader r)
         {
-            firePacket.Deserialize(r);
-            if (firePacket.playerPin != GameManager.instance.players[firePacket.playerId].securityPin)
+            _firePacket.Deserialize(r);
+            if (_firePacket.PlayerPin != GameManager.instance.players[_firePacket.PlayerId].securityPin)
+            {
                 return;
-            fireCommands[fireCommandIndex].projectileId = firePacket.projectileDatabaseId;
-            fireCommands[fireCommandIndex].vehicleId = firePacket.playerId;
-            fireCommands[fireCommandIndex].weaponSlotFired = firePacket.weaponSlotFired;
-            fireCommands[fireCommandIndex].bulletCount = firePacket.uniqueProjectileId;
-            fireCommands[fireCommandIndex].process = true;
-            fireCommandIndex++;
+            }
+            
+            _fireCommands[_fireCommandIndex].ProjectileId = _firePacket.ProjectileDatabaseId;
+            _fireCommands[_fireCommandIndex].VehicleId = _firePacket.PlayerId;
+            _fireCommands[_fireCommandIndex].WeaponSlotFired = _firePacket.WeaponSlotFired;
+            _fireCommands[_fireCommandIndex].UniqueProjectileId = _firePacket.UniqueProjectileId;
+            _fireCommands[_fireCommandIndex].Process = true;
+            _fireCommands[_fireCommandIndex].Rotation.x = _firePacket.RotX;
+            _fireCommands[_fireCommandIndex].Rotation.y = _firePacket.RotY;
+            _fireCommands[_fireCommandIndex].Rotation.z = _firePacket.RotZ;
+            _fireCommandIndex++;
+        }
+
+        public void AddCollisionReport(NetPacketReader r)
+        {
+            Debug.Log("Add collision report");
+            _reportCollision.Deserialize(r);
+            if (GameManager.instance.players[_reportCollision.PlayerIdThatShotThisProjectile].securityPin ==
+                _reportCollision.PlayerPin)
+            {
+                _reportedCollisions[_reportCollisionIndex].UniqueProjectileId = _reportCollision.UniqueProjectileId;
+                _reportedCollisions[_reportCollisionIndex].PlayerIdThatWasHit = _reportCollision.PlayerIdThatWasHit;
+                _reportedCollisions[_reportCollisionIndex].ByProjectileDatabaseId =
+                    _reportCollision.ByProjectileDatabaseId;
+                _reportedCollisions[_reportCollisionIndex].PlayerIdThatShotThisProjectile =
+                    _reportCollision.PlayerIdThatShotThisProjectile;
+                _reportedCollisions[_reportCollisionIndex].TickWhenCollisionOccurred =
+                    _reportCollision.TickWhenCollisionOccurred;
+                _reportedCollisions[_reportCollisionIndex].Process = true;
+                _reportedCollisions[_reportCollisionIndex].impactPos = new Vector3(_reportCollision.impactPosX, _reportCollision.impactPosY, _reportCollision.impactPosZ);
+                _reportCollisionIndex++;
+            }
         }
     }
 }

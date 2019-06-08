@@ -22,5 +22,6 @@ namespace Scriptable
         public float shieldRechargePerSec;
         public int moduleSlots;
         public int weaponSlots;
+        public GameObject vehicleUI;
     }
 }

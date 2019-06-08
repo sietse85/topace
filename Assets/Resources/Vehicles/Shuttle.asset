@@ -29,3 +29,5 @@ MonoBehaviour:
   shieldRechargePerSec: 2
   moduleSlots: 2
   weaponSlots: 2
+  vehicleUI: {fileID: 3540568191267255476, guid: 0e31e6dd86068ce4e9c9cd1be7e280bd,
+    type: 3}

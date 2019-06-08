@@ -11,6 +11,7 @@ namespace Network
         [SerializeField] private int ownedByPlayerId;
         [SerializeField] public int networkTransformId;
         public NetworkTransformUpdate u;
+        public bool isMain;
 
         private void Awake()
         {
